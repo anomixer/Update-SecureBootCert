@@ -1,5 +1,11 @@
 # Windows Secure Boot Certificate Auto-Updater
 
+> [!WARNING]
+> **Action Required: The June 2026 deadline is approaching! Download and run this tool immediately to update your Secure Boot certificate to the 2023 version.**
+>
+> If you don't know how to use Git, you can directly download the packaged zip file:
+> 📦 **[Download Update-SecureBootCert.zip](https://github.com/anomixer/Update-SecureBootCert/releases/latest/download/Update-SecureBootCert.zip)**
+
 [中文說明 (Traditional Chinese)](./README_TW.md)
 
 > Automatically checks, downloads, and installs Windows Secure Boot certificate updates, ensuring your system continues to function correctly after the certificate expiration in June 2026.

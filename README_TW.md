@@ -1,5 +1,12 @@
 # Windows 安全啟動憑證自動更新工具
 
+> [!WARNING]
+> **【緊急通知】憑證即將於 6 月到期！請立即下載並執行此工具，將您的 Secure Boot 憑證更新至 2023 版本以防系統無法開機。**
+> **Action Required: The June 2026 deadline is approaching! Download and run this tool immediately to update your Secure Boot certificate to the 2023 version.**
+>
+> 如果您不會使用 Git，可以直接下載已打包的 ZIP 檔案：
+> 📦 **[下載 Update-SecureBootCert.zip](https://github.com/anomixer/Update-SecureBootCert/releases/latest/download/Update-SecureBootCert.zip)**
+
 [English Readme](./README.md)
 
 > 自動檢查、下載並安裝 Windows 安全啟動憑證更新，確保系統在 2026 年 6 月憑證到期後仍能正常運作。
