@@ -14,7 +14,7 @@
 #   OK Windows Server 2016/2019/2022/2025
 #
 # Why Update:
-#   These certificates expire June-October 2026
+#   These certificates expired/are expiring June-October 2026
 #   Expiry will cause:
 #   - Your computer may NEVER boot into Windows 10/11 again
 #   - System completely unable to install ANY security updates
@@ -150,7 +150,7 @@ function Get-SecureBootCertificates {
                 $certInfo += [PSCustomObject]@{ Type = "KEK"; Certificate = "Microsoft KEK CA 2023"; Status = "√ Valid"; Expiry = "~2033"; Color = "Green" }
             }
             if ($kekString -match 'Microsoft Corporation KEK CA 2011') {
-                $certInfo += [PSCustomObject]@{ Type = "KEK"; Certificate = "Microsoft KEK CA 2011"; Status = "√ Expires Soon"; Expiry = "2026-06"; Color = "Yellow" }
+                $certInfo += [PSCustomObject]@{ Type = "KEK"; Certificate = "Microsoft KEK CA 2011"; Status = "X EXPIRED"; Expiry = "2026-06"; Color = "Red" }
             }
         }
 
@@ -162,7 +162,7 @@ function Get-SecureBootCertificates {
                 $certInfo += [PSCustomObject]@{ Type = "DB "; Certificate = "Windows UEFI CA 2023"; Status = "√ Valid"; Expiry = "~2033"; Color = "Green" }
             }
             if ($dbString -match 'Microsoft UEFI CA 2011') {
-                $certInfo += [PSCustomObject]@{ Type = "DB "; Certificate = "Microsoft UEFI CA 2011"; Status = "√ Expires Soon"; Expiry = "2026-06"; Color = "Yellow" }
+                $certInfo += [PSCustomObject]@{ Type = "DB "; Certificate = "Microsoft UEFI CA 2011"; Status = "X EXPIRED"; Expiry = "2026-06"; Color = "Red" }
             }
             if ($dbString -match 'Windows Production PCA 2011') {
                 $certInfo += [PSCustomObject]@{ Type = "DB "; Certificate = "Windows Production PCA 2011"; Status = "√ Expires Soon"; Expiry = "2026-10"; Color = "Yellow" }
@@ -216,7 +216,7 @@ function Show-ProgramInfo {
     Write-Host "================================================================" -ForegroundColor Cyan
     
     Write-Host ""
-    Write-Host "WARNING: Certificates expire June-October 2026!" -ForegroundColor Yellow
+    Write-Host "WARNING: Certificates expired/are expiring June-October 2026!" -ForegroundColor Yellow
     Write-Host ""
     Write-Host "If NOT updated:" -ForegroundColor Red
     Write-Host "  X Your computer may NEVER boot into Windows again!" -ForegroundColor Red
@@ -344,7 +344,7 @@ else {
 # Show old certificates if they exist
 if ($installed2011Certs -and $installed2011Certs.Count -gt 0) {
     Write-Host ""
-    Write-Host "Old 2011 certificates (will expire in 2026):" -ForegroundColor Yellow
+    Write-Host "Old 2011 certificates (expired or expiring in 2026):" -ForegroundColor Yellow
     $installed2011Certs | ForEach-Object {
         $daysUntilExpiry = ($_.NotAfter - (Get-Date)).Days
         Write-Host "  * $($_.Subject)" -ForegroundColor Yellow

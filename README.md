@@ -1,7 +1,7 @@
 # Windows Secure Boot Certificate Auto-Updater
 
 > [!WARNING]
-> **Action Required: The June 2026 deadline is approaching! Download and run this tool immediately to update your Secure Boot certificate to the 2023 version.**
+> **Action Required: The June 2026 deadline has passed! Download and run this tool immediately to update your Secure Boot certificate to the 2023 version to prevent boot failure or driver compatibility issues.**
 >
 > If you don't know how to use Git, you can directly download the packaged zip file:
 > 📦 **[Download Update-SecureBootCert.zip](https://github.com/anomixer/Update-SecureBootCert/releases/latest/download/Update-SecureBootCert.zip)**
@@ -63,7 +63,7 @@ Double-click RunMe.bat
 
 ### Certificate Expiration Schedule
 
-| Expiring Certificate | Expiration Date | New Certificate | Storage Location | Purpose |
+| Expired / Expiring Old Certificate | Expiration Date | New Certificate | Storage Location | Purpose |
 |---|---|---|---|---|
 | **Microsoft Corporation KEK CA 2011** | June 2026 | Microsoft Corporation KEK 2K CA 2023 | Stored in KEK | Signing updates for DB and DBX. |
 | **Microsoft Windows Production PCA 2011** | October 2026 | Windows UEFI CA 2023 | Stored in DB | Signing the Windows bootloader. |
@@ -76,7 +76,7 @@ Double-click RunMe.bat
 - ❌ **System completely unable to install ANY security updates**.
 - ❌ **All new software and drivers will be unusable**.
 - ❌ **Computer exposed to EXTREME security risks** (cannot patch vulnerabilities).
-- ⚠️ **Risk increases drastically after June 2026**.
+- ⚠️ **Risk has increased drastically after June 2026 (the deadline has passed; systems may fail to boot upon installing new updates or drivers)**.
 
 ---
 
@@ -108,7 +108,7 @@ Double-click RunMe.bat
 - **Secure Boot Status Check**: Detects if Secure Boot is enabled.
 - **BIOS Certificate Read**: Directly reads certificate info from BIOS/UEFI.
 - **Expiration Warning**: Clearly marks certificate status with Red/Yellow/Green colors.
-- **Old 2011 Certificate Check**: Identifies expiring certificates.
+- **Old 2011 Certificate Check**: Identifies expired or expiring certificates.
 
 ### 2. ⚡ Fully Automatic Updates (Step 2)
 - **Non-ESU Auto-Support**: Automatically downloads updates via Microsoft Update Catalog.
@@ -329,7 +329,7 @@ You might ask: "Microsoft says three certificates are expiring (KEK, UEFI CA, PC
 Secure Boot doesn't check if the driver itself is expired, but checks "**who signed it**".
 
 *   **Current Situation**: Drivers are signed by Microsoft with old keys; your BIOS trusts old keys via `UEFI CA 2011`.
-*   **After 2026**: New hardware drivers and software will be signed with **New Keys**, originating from **"Windows UEFI CA 2023"**.
+*   **After June 2026**: New hardware drivers and software are being signed with **New Keys**, originating from **"Windows UEFI CA 2023"**.
 
 **By adding "Windows UEFI CA 2023" to the BIOS Allowlist (DB):**
 Any driver or system update tracing back to this new source will be considered safe and allowed to load.
@@ -477,7 +477,7 @@ Invoke-Command -ComputerName (Get-ADComputer -Filter *).Name -ScriptBlock {
 ### Q5: What happens if I don't install it?
 
 **A**: If not installed:
-- After June 2026, Secure Boot might fail.
+- Since June 2026, systems with outdated certificates may fail Secure Boot validation.
 - Cannot install new security updates.
 - Cannot use newly signed software and drivers.
 - System security compromised.
@@ -501,7 +501,7 @@ Invoke-Command -ComputerName (Get-ADComputer -Filter *).Name -ScriptBlock {
 
 ## 🚨 Emergency Rescue (Post-June 2026) 🚨
 
-**If you are seeing this after June 2026 and your computer is locked out of Windows by Secure Boot, DO NOT PANIC! Follow these steps to rescue your system.**
+**If your computer has been locked out of Windows by Secure Boot due to the expired certificate, DO NOT PANIC! Follow these steps to rescue your system.**
 
 ### Method A: Temporarily Disable Secure Boot (Recommended/Fastest)
 
@@ -587,6 +587,6 @@ If you currently boot using the old **Legacy BIOS (CSM)** mode instead of UEFI, 
 
 ---
 
-**Last Updated**: 2026-01-26  
-**Version**: 1.0  
+**Last Updated**: 2026-07-13  
+**Version**: 1.1  
 **Author**: anomixer

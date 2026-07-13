@@ -1,15 +1,15 @@
 # Windows 安全啟動憑證自動更新工具
 
 > [!WARNING]
-> **【緊急通知】憑證即將於 6 月到期！請立即下載並執行此工具，將您的 Secure Boot 憑證更新至 2023 版本以防系統無法開機。**
-> **Action Required: The June 2026 deadline is approaching! Download and run this tool immediately to update your Secure Boot certificate to the 2023 version.**
+> **【緊急通知】舊版 Secure Boot 憑證已於 2026 年 6 月到期！請立即下載並執行此工具，將您的 Secure Boot 憑證更新至 2023 版本，以防系統無法開機或無法載入新驅動程式。**
+> **Action Required: The June 2026 deadline has passed! Download and run this tool immediately to update your Secure Boot certificate to the 2023 version to prevent boot failure or driver compatibility issues.**
 >
 > 如果您不會使用 Git，可以直接下載已打包的 ZIP 檔案：
 > 📦 **[下載 Update-SecureBootCert.zip](https://github.com/anomixer/Update-SecureBootCert/releases/latest/download/Update-SecureBootCert.zip)**
 
 [English Readme](./README.md)
 
-> 自動檢查、下載並安裝 Windows 安全啟動憑證更新，確保系統在 2026 年 6 月憑證到期後仍能正常運作。
+> 自動檢查、下載並安裝 Windows 安全啟動憑證更新，確保系統在舊版憑證於 2026 年 6 月到期後仍能正常運作。
 
 ## 📑 目錄
 
@@ -64,7 +64,7 @@
 
 ### 憑證到期時間表
 
-| 即將到期的憑證 | 到期日期 | 新證書 | 儲存地點 | 目的 |
+| 已到期 / 即將到期的舊憑證 | 到期日期 | 新憑證 | 儲存地點 | 目的 |
 |---|---|---|---|---|
 | **Microsoft Corporation KEK CA 2011** | 2026年6月 | Microsoft Corporation KEK 2K CA 2023 | 儲存在 KEK 中 | 簽署資料庫和 DBX 的更新。 |
 | **Microsoft Windows 生產 PCA 2011** | 2026年10月 | Windows UEFI CA 2023 | 儲存在資料庫中 | 用於簽署 Windows 開機載入器。 |
@@ -77,7 +77,7 @@
 - ❌ **系統完全無法安裝任何安全更新**
 - ❌ **所有新的軟體和驅動程式都無法使用**
 - ❌ **電腦暴露在極高的安全風險中**（無法修補漏洞）
-- ⚠️ **2026年6月後風險急劇增加**
+- ⚠️ **2026年6月後風險已急劇增加**（舊憑證已到期，系統隨時可能因安裝新更新或驅動而無法開機）
 
 ---
 
@@ -109,7 +109,7 @@
 - **Secure Boot 狀態檢查**: 檢測 Secure Boot 是否啟用
 - **BIOS 憑證讀取**: 直接讀取 BIOS/UEFI 中的憑證資訊
 - **到期日預警**: 用紅/黃/綠色清楚標示憑證狀態
-- **檢查 2011 舊憑證**: 識別即將到期的舊憑證
+- **檢查 2011 舊憑證**: 識別已到期或即將到期的舊憑證
 
 ### 2. ⚡ 全自動更新 (Step 2)
 - **無 ESU 自動支援**: 透過 Microsoft Update Catalog 自動下載更新
@@ -330,7 +330,7 @@ Start-ScheduledTask -TaskName "\Microsoft\Windows\PI\Secure-Boot-Update"
 Secure Boot 的運作並不是檢查驅動程式本身是否過期，而是檢查「**是由誰簽署的**」。
 
 *   **目前的狀況**：驅動程式由微軟用舊鑰匙簽署，您的 BIOS 透過 `UEFI CA 2011` 信任舊鑰匙。
-*   **2026 年後**：新硬體驅動程式、軟體將改用 **新密鑰** 簽署，其源頭是 **「Windows UEFI CA 2023」**。
+*   **2026 年 6 月起**：新硬體驅動程式、軟體已陸續改用 **新密鑰** 簽署，其源頭是 **「Windows UEFI CA 2023」**。
 
 **只要將「Windows UEFI CA 2023」加入 BIOS 的白名單 (DB)：**
 任何追溯到這個新源頭的驅動程式、系統更新，都會被視為安全並允許載入。
@@ -478,7 +478,7 @@ Invoke-Command -ComputerName (Get-ADComputer -Filter *).Name -ScriptBlock {
 ### Q5: 不安裝會怎樣？
 
 **A**: 如果不安裝：
-- 2026年6月後，Secure Boot 功能可能失效
+- 舊憑證已於 2026 年 6 月到期，未更新的 Secure Boot 功能隨時可能失效
 - 無法安裝新的安全更新
 - 無法使用新簽署的軟體和驅動程式
 - 系統安全性嚴重受損
@@ -502,7 +502,7 @@ Invoke-Command -ComputerName (Get-ADComputer -Filter *).Name -ScriptBlock {
 
 ## 🚨 緊急救援：如果已經無法開機 (2026/6 以後) 🚨
 
-**如果您是在 2026/6 以後才看到這篇文章，且電腦已經遭到 Secure Boot 封鎖無法進入 Windows，先別慌！請按照以下步驟自救。**
+**如果您的電腦目前已因舊憑證到期而遭到 Secure Boot 封鎖、無法進入 Windows，先別慌！請按照以下步驟自救。**
 
 ### 方法 A：暫時關閉 Secure Boot (最推薦/最快速)
 
@@ -625,6 +625,6 @@ Invoke-Command -ComputerName (Get-ADComputer -Filter *).Name -ScriptBlock {
 
 ---
 
-**最後更新**: 2026-01-26  
-**版本**: 1.0  
+**最後更新**: 2026-07-13  
+**版本**: 1.1  
 **作者**: anomixer
