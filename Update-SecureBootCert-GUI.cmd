@@ -696,6 +696,249 @@ function Start-SbDeployment($State, [switch]$DbOnly) {
 '@
 . ([scriptblock]::Create($SbEngine))
 
+# ===== Traditional Chinese (zh-TW) =====
+# Windows set to Traditional Chinese (zh-TW/HK/MO) shows the window in Traditional
+# Chinese; otherwise it stays English. SBGUI_LANG=zh-TW or SBGUI_LANG=en overrides.
+$script:UiLang = 'en'
+try {
+    $cc = [System.Globalization.CultureInfo]::CurrentCulture
+    $uc = [System.Globalization.CultureInfo]::CurrentUICulture
+    if (($cc.Name -match '^zh-(TW|HK|MO)$') -or ($uc.Name -match '^zh-(TW|HK|MO)$')) { $script:UiLang = 'zh-TW' }
+} catch { }
+if ($env:SBGUI_LANG -in 'zh-TW', 'zh', 'zh-HK', 'zh-MO') { $script:UiLang = 'zh-TW' }
+elseif ($env:SBGUI_LANG -eq 'en') { $script:UiLang = 'en' }
+
+$script:Zh = @{
+    # --- window ---
+    'Secure Boot Certificate Updater'                            = '安全開機憑證更新工具'
+    'What to do:'                                                = '要做什麼：'
+    "Install the 2023 Secure Boot certificates and boot manager (Microsoft's full update)" = '安裝 2023 安全開機憑證與開機管理程式（Microsoft 完整更新）'
+    'Old method: only add Windows UEFI CA 2023 to the DB (0x40), not the KEK or the boot manager' = '舊方法：只把 Windows UEFI CA 2023 加入 DB（0x40），不更新 KEK 或開機管理程式'
+    'Install all pending Windows updates first (software only; can take a long time)' = '先安裝所有待處理的 Windows 更新（僅軟體更新，可能很久）'
+    'Suspend BitLocker for the next 2 restarts (it turns back on by itself)' = '暫停 BitLocker 兩次重新開機（之後會自動恢復）'
+    'Refresh'                                                    = '重新整理'
+    'Start update'                                               = '開始更新'
+    'Continue update'                                            = '繼續更新'
+    'Restart now'                                                = '立即重新開機'
+    'Open log folder'                                            = '開啟記錄資料夾'
+    'Certificates in the firmware'                               = '韌體中的憑證'
+    'Recent Secure Boot events'                                  = '最近的安全開機事件'
+    'Store'                                                      = '存放區'
+    'Certificate'                                                = '憑證'
+    'Expires'                                                    = '到期日'
+    'Status'                                                     = '狀態'
+    'Used for'                                                   = '用途'
+    'Time'                                                       = '時間'
+    'Event'                                                      = '事件'
+    'Meaning'                                                    = '說明'
+    'Reading the state...'                                       = '正在讀取狀態…'
+    'State: '                                                    = '狀態：'
+    '--- State at '                                              = '--- 狀態於 '
+    'Unexpected error: '                                         = '未預期的錯誤：'
+    'Line '                                                      = '行 '
+    'Nothing is changed until you click Start update and confirm.' = '在按下「開始更新」並確認之前，不會變更任何設定。'
+    'Restarts are needed. If BitLocker is on, have the recovery key ready (aka.ms/myrecoverykey) or suspend it. Use at your own risk.' = '需要重新開機。若啟用 BitLocker，請備妥復原金鑰（aka.ms/myrecoverykey）或先暫停；使用風險自負。'
+    'Could not read the certificates from the firmware (Secure Boot not available?)' = '無法從韌體讀取憑證（安全開機無法使用？）'
+    'No Secure Boot servicing events in the System log'          = '系統記錄中沒有安全開機維護事件'
+    'Restart the PC (button above). Then open this tool again: it starts the next step and confirms the result.' = '請重新開機（上方按鈕），然後再開一次本工具：它會進行下一步並確認結果。'
+    'Restarting in 30 seconds (cancel with: shutdown /a)...'     = '將於 30 秒後重新開機（可用 shutdown /a 取消）…'
+    'Cancelled. Nothing was changed.'                            = '已取消，沒有變更任何設定。'
+    'Tick at least one action.'                                  = '請至少勾選一項動作。'
+    'The update is still running. Wait until it finishes, then close the window.' = '更新仍在執行，請等它結束後再關閉視窗。'
+    'Administrator rights are needed. Open the file again and accept the prompt.' = '需要系統管理員權限。請重新開啟本檔案並接受提示。'
+    'Secure Boot'                                                = '安全開機'
+    'Restart'                                                    = '重新開機'
+    'Secure Boot certificate update (Update-SecureBootCert)'     = '安全開機憑證更新（Update-SecureBootCert）'
+
+    # --- state rows ---
+    'Windows'                                                    = 'Windows'
+    'KEK 2K CA 2023 (KEK)'                                       = 'KEK 2K CA 2023（KEK）'
+    'Windows UEFI CA 2023 (DB)'                                  = 'Windows UEFI CA 2023（DB）'
+    '2023 boot manager'                                          = '2023 開機管理程式'
+    'Windows update status'                                      = 'Windows 更新狀態'
+    'Secure-Boot-Update task'                                    = 'Secure-Boot-Update 排程工作'
+    'Restart pending'                                            = '有待重新開機'
+    'Enabled'                                                    = '已啟用'
+    'DISABLED'                                                   = '已停用'
+    'not available (legacy BIOS/CSM)'                            = '無法使用（傳統 BIOS/CSM）'
+    'Yes'                                                        = '是'
+    'No'                                                         = '否'
+    'Yes (PC starts with it)'                                    = '是（電腦已用它開機）'
+    'Not yet (old boot manager)'                                 = '尚未（舊的開機管理程式）'
+    'No (2023 CA not in the DB)'                                 = '否（DB 中沒有 2023 CA）'
+    'unknown (not reported)'                                     = '未知（未回報）'
+    'not reported by this Windows'                               = '此版 Windows 未回報'
+    'Updated'                                                    = '已更新'
+    'InProgress'                                                 = '進行中'
+    'Error'                                                      = '錯誤'
+    'not set'                                                    = '未設定'
+    '0 (nothing queued)'                                         = '0（沒有排隊的更新）'
+    'NOT FOUND'                                                  = '找不到'
+    'present, never run'                                         = '存在，尚未執行'
+    'off'                                                        = '關閉'
+    'not available'                                              = '無法使用'
+    'ON (recovery key exists)'                                   = '開啟（有復原金鑰）'
+    'ON (no recovery key protector!)'                            = '開啟（沒有復原金鑰保護！）'
+
+    # --- summary ---
+    'This PC does not use UEFI Secure Boot (legacy BIOS/CSM), or its Secure Boot variables cannot be read. There is nothing to update in the firmware.' = '這台電腦沒有使用 UEFI 安全開機（傳統 BIOS/CSM），或無法讀取安全開機變數；韌體沒有需要更新的項目。'
+    'Up to date: the 2023 Secure Boot certificates and boot manager are in place.' = '已是最新：2023 安全開機憑證與開機管理程式都已就位。'
+    'The 2023 certificates are in the firmware (KEK and DB). This Windows build does not report the boot manager status.' = '2023 憑證已在韌體中（KEK 與 DB）；此版 Windows 沒有回報開機管理程式狀態。'
+    'Restart needed: the certificates are applied and the 2023 boot manager is installed at the next restart. After restarting, run this tool again.' = '需要重新開機：憑證已套用，2023 開機管理程式會在下次重新開機時安裝；重新開機後請再執行本工具。'
+    'Not updated: the 2023 Secure Boot certificates are not in the firmware yet.' = '尚未更新：韌體中還沒有 2023 安全開機憑證。'
+
+    # --- hints ---
+    'The Secure-Boot-Update scheduled task is missing. Install the latest cumulative update for this Windows, then run this tool again.' = '找不到 Secure-Boot-Update 排程工作。請先安裝此版 Windows 最新的累積更新，然後再執行本工具。'
+    'Secure Boot is off. Windows can still install the certificates; turn Secure Boot on in the BIOS/UEFI setup afterwards and run this tool again to check.' = '安全開機已關閉。Windows 仍可安裝憑證；之後請在 BIOS/UEFI 設定中開啟安全開機，再執行本工具檢查。'
+    'Windows held the update because BitLocker would ask for the recovery key. Suspend BitLocker for 2 restarts and run the update again.' = 'Windows 暫緩更新，因為 BitLocker 會要求復原金鑰。請暫停 BitLocker 兩次重新開機，然後再執行更新。'
+    'The firmware refused the change. Look for a BIOS/UEFI update from the PC maker; Windows tries again at each restart.' = '韌體拒絕這項變更。請找電腦製造商的 BIOS/UEFI 更新；Windows 會在每次重新開機時再試。'
+    'The last attempt failed; Windows tries again at the next restart. If it keeps failing, look for a BIOS/UEFI update.' = '上次嘗試失敗；Windows 會在下次重新開機時再試。若持續失敗，請找 BIOS/UEFI 更新。'
+    'Microsoft blocks this update on this device because of a known firmware issue. Install the latest BIOS/UEFI update from the PC maker, then try again.' = '因為已知的韌體問題，Microsoft 在這台裝置上封鎖了此更新。請安裝電腦製造商最新的 BIOS/UEFI 更新後再試。'
+    'The firmware has no KEK update signed by the PC maker, so the KEK cannot be updated by Windows. Look for a BIOS/UEFI update from the PC maker.' = '韌體沒有由電腦製造商簽署的 KEK 更新，因此 Windows 無法更新 KEK。請找電腦製造商的 BIOS/UEFI 更新。'
+    'BitLocker is on: have the 48-digit recovery key ready (https://aka.ms/myrecoverykey) or suspend BitLocker for 2 restarts.' = 'BitLocker 已開啟：請備妥 48 位數復原金鑰（https://aka.ms/myrecoverykey），或暫停 BitLocker 兩次重新開機。'
+
+    # --- certificates ---
+    'Valid'                                                      = '有效'
+    'Expired'                                                    = '已過期'
+    'Expires soon'                                               = '即將到期'
+    'Signs updates to DB and DBX'                                = '簽署 DB 與 DBX 的更新'
+    'Windows boot manager'                                       = 'Windows 開機管理程式'
+    'Third-party boot loaders and option ROMs'                   = '第三方開機載入程式與 Option ROM'
+    'Third-party boot loaders (Linux shim, tools)'               = '第三方開機載入程式（Linux shim、工具）'
+    'Third-party option ROMs (graphics, network)'                = '第三方 Option ROM（顯示卡、網路）'
+    'Added by the PC maker or another vendor'                    = '由電腦製造商或其他廠商加入'
+
+    # --- events ---
+    'Not applied: BitLocker would have asked for the recovery key' = '未套用：BitLocker 會要求復原金鑰'
+    'DBX update postponed: an old, possibly revoked boot manager is on the EFI partition' = 'DBX 更新延後：EFI 磁碟分割上有舊的、可能已被撤銷的開機管理程式'
+    'DBX updated'                                                = 'DBX 已更新'
+    'DB updated'                                                 = 'DB 已更新'
+    'DBX updated: Windows Production PCA 2011 revoked'           = 'DBX 已更新：Windows Production PCA 2011 已撤銷'
+    'DBX updated: old boot manager versions blocked'             = 'DBX 已更新：舊版開機管理程式已封鎖'
+    'KEK updated with Microsoft Corporation KEK 2K CA 2023'      = 'KEK 已更新為 Microsoft Corporation KEK 2K CA 2023'
+    'DB updated with Microsoft Option ROM UEFI CA 2023'          = 'DB 已加入 Microsoft Option ROM UEFI CA 2023'
+    'DB updated with Microsoft UEFI CA 2023'                     = 'DB 已加入 Microsoft UEFI CA 2023'
+    'The firmware returned an error; Windows tries again at the next restart' = '韌體回傳錯誤；Windows 會在下次重新開機時再試'
+    'Unexpected error; Windows tries again at the next restart'   = '未預期的錯誤；Windows 會在下次重新開機時再試'
+    'DBX update blocked: Windows UEFI CA 2023 is not in the DB'  = 'DBX 更新被封鎖：DB 中沒有 Windows UEFI CA 2023'
+    'DBX update blocked: the boot manager is not signed with Windows UEFI CA 2023' = 'DBX 更新被封鎖：開機管理程式不是用 Windows UEFI CA 2023 簽署'
+    'Boot manager signed with Windows UEFI CA 2023 installed'    = '已安裝以 Windows UEFI CA 2023 簽署的開機管理程式'
+    'A restart is needed before the update can continue'         = '需要重新開機才能繼續更新'
+    'The 2023 certificates/boot manager are not fully applied to the firmware yet' = '2023 憑證／開機管理程式尚未完整套用到韌體'
+    'Blocked by Microsoft: known firmware issue on this device'  = '已被 Microsoft 封鎖：這台裝置有已知的韌體問題'
+    "KEK update not possible: no KEK signed by this PC maker's platform key (PK)" = '無法更新 KEK：沒有由這台電腦製造商平台金鑰（PK）簽署的 KEK'
+    'Finished: this PC has the 2023 Secure Boot certificates and boot manager' = '已完成：這台電腦已有 2023 安全開機憑證與開機管理程式'
+    'Secure Boot servicing event'                                = '安全開機維護事件'
+
+    # --- log: step headers and fixed lines ---
+    'Step: Windows 10 cumulative update (KB5073724)'             = '步驟：Windows 10 累積更新（KB5073724）'
+    'Step: Windows Update'                                       = '步驟：Windows 更新'
+    'Step: BitLocker'                                            = '步驟：BitLocker'
+    'Step: Secure Boot certificates'                             = '步驟：安全開機憑證'
+    'Finished.'                                                  = '完成。'
+    'Finished, with warnings or errors (see above).'             = '完成，但有警告或錯誤（見上方）。'
+    'Searching for pending Windows updates (software only; this can take several minutes)...' = '正在搜尋待處理的 Windows 更新（僅軟體更新，可能需要幾分鐘）…'
+    'OK: no pending updates.'                                    = 'OK：沒有待處理的更新。'
+    'Installing (please wait)...'                                = '正在安裝（請稍候）…'
+    'OK: updates installed.'                                     = 'OK：更新已安裝。'
+    'OK: updates installed, some with errors (see above).'       = 'OK：更新已安裝，部分有錯誤（見上方）。'
+    'ERROR: installation failed.'                                = '錯誤：安裝失敗。'
+    'ERROR: installation aborted.'                               = '錯誤：安裝已中止。'
+    'A restart is required to finish installing the updates.'    = '需要重新開機才能完成安裝這些更新。'
+    'BitLocker is not available; nothing to suspend.'            = 'BitLocker 無法使用，沒有需要暫停的項目。'
+    'Skipped: UEFI Secure Boot is not available on this PC.'     = '略過：這台電腦沒有 UEFI 安全開機。'
+    'ERROR: the Secure-Boot-Update scheduled task was not found. Install the latest cumulative update for this Windows, then run this tool again.' = '錯誤：找不到 Secure-Boot-Update 排程工作。請先安裝此版 Windows 最新的累積更新，然後再執行本工具。'
+    'Starting the Secure-Boot-Update task...'                    = '正在啟動 Secure-Boot-Update 排程工作…'
+    'OK: value set.'                                             = 'OK：機碼值已設定。'
+    'WARNING: unknown processor architecture; skipped.'          = '警告：未知的處理器架構，已略過。'
+    'ERROR: the Catalog did not return a download link.'         = '錯誤：Microsoft Update Catalog 沒有回傳下載連結。'
+    'Installing (10-30 minutes; do not turn the PC off)...'      = '正在安裝（10–30 分鐘，請勿關機）…'
+    'NOTE: without an ESU license, Windows can remove this update again after the restart. The certificate step does not depend on it.' = '注意：若沒有 ESU 授權，Windows 可能在重新開機後再次移除這個更新；憑證步驟不依賴它。'
+    '         Continuing; the certificate step does not depend on it.' = '         繼續執行；憑證步驟不依賴這個更新。'
+    '         Usually a newer cumulative update is installed, or the PC has no ESU license. The certificate step does not need it.' = '         通常是已安裝較新的累積更新，或這台電腦沒有 ESU 授權；憑證步驟不需要它。'
+    'Skipped: KB5073724 is only for Windows 10 21H2/22H2.'       = '略過：KB5073724 只適用於 Windows 10 21H2/22H2。'
+    'OK: KB5073724 installed.'                                   = 'OK：KB5073724 已安裝。'
+    'OK: KB5073724 installed; restart required.'                 = 'OK：KB5073724 已安裝，需要重新開機。'
+    'OK: KB5073724 is already installed.'                        = 'OK：KB5073724 已經安裝。'
+    'WARNING: KB5073724 is not applicable to this PC (0x80240017).' = '警告：KB5073724 不適用於這台電腦（0x80240017）。'
+    'full update: KEK, DB certificates and boot manager'          = '完整更新：KEK、DB 憑證與開機管理程式'
+    'old method: Windows UEFI CA 2023 in the DB only'             = '舊方法：只把 Windows UEFI CA 2023 加入 DB'
+    'Windows already has an update queued (AvailableUpdates = 0x{0:X}); leaving it as is.' = 'Windows 已有排隊的更新（AvailableUpdates = 0x{0:X}），保持原狀。'
+}
+
+# Dynamic text: first match wins, so specific patterns go before the generic ones.
+$script:ZhRules = @(
+    @('^=== (?<d>.+) - update started ===$', '=== ${d} - 更新開始 ==='),
+    @('^BitLocker \((?<d>[A-Za-z]:)\)$', 'BitLocker（${d}）'),
+    @('^Install (?<kb>\S+) first \(only Windows 10 21H2/22H2 older than build \.(?<u>\d+)\)$', '先安裝 ${kb}（僅限 Windows 10 21H2/22H2，組建低於 .${u}）'),
+    @('^Secure Boot Certificate Updater v(?<v>.+)$', '安全開機憑證更新工具 v${v}'),
+    @('^Log file: (?<p>.+)$', '記錄檔：${p}'),
+    @('^Windows reported error (?<h>0x[0-9A-Fa-f]+)$', 'Windows 回報錯誤 ${h}'),
+    @('^Skipped: this PC is at build (?<b>[0-9.]+), so (?<kb>\S+) or a later cumulative update is installed\.$', '略過：本機組建為 ${b}，已安裝 ${kb} 或更新的累積更新。'),
+    @('^Looking up (?<kb>\S+) for Windows 10 Version (?<v>.+) \((?<a>[^)]+)\) in the Microsoft Update Catalog\.\.\.$', '正在 Microsoft Update Catalog 查詢 ${kb}（Windows 10 ${v}，${a}）…'),
+    @('^WARNING: (?<kb>\S+) for Windows 10 Version (?<v>.+) \((?<a>[^)]+)\) was not found in the Catalog\.$', '警告：在 Microsoft Update Catalog 找不到 ${kb}（Windows 10 ${v}，${a}）。'),
+    @('^\s*Manual download: (?<u>\S+)$', '         手動下載：${u}'),
+    @('^Found: (?<t>.+)$', '找到：${t}'),
+    @('^Downloading (?<f>.+) \(several hundred MB, please wait\)\.\.\.$', '正在下載 ${f}（數百 MB，請稍候）…'),
+    @('^Downloading (?<n>\d+) update\(s\)\.\.\.$', '正在下載 ${n} 個更新…'),
+    @('^ERROR: unexpected download host (?<h>.+); not downloading\.$', '錯誤：非預期的下載主機 ${h}，不會下載。'),
+    @('^ERROR: the downloaded file failed the signature check \((?<s>.*)\); not installing\.$', '錯誤：下載的檔案簽章檢查失敗（${s}），不會安裝。'),
+    @('^WARNING: the installer returned (?<h>0x[0-9A-Fa-f]+)\.$', '警告：安裝程式回傳 ${h}。'),
+    @('^WARNING: (?<kb>\S+) failed: (?<m>.+)$', '警告：${kb} 失敗：${m}'),
+    @('^  skipped \(needs user input\): (?<t>.+)$', '  已略過（需要使用者輸入）：${t}'),
+    @('^  not installed \(code (?<c>-?\d+), (?<h>0x[0-9A-Fa-f]+)\): (?<t>.+)$', '  未安裝（代碼 ${c}，${h}）：${t}'),
+    @('^WARNING: download result code (?<c>-?\d+)\.$', '警告：下載結果代碼 ${c}。'),
+    @('^WARNING: result code (?<c>-?\d+)\.$', '警告：結果代碼 ${c}。'),
+    @('^WARNING: Windows Update failed: (?<m>.+)$', '警告：Windows 更新失敗：${m}'),
+    @('^BitLocker protection is already off on (?<d>.+)\.$', 'BitLocker 保護已在 ${d} 關閉。'),
+    @('^OK: BitLocker suspended on (?<d>.+) for the next (?<n>\d+) restarts; it turns back on by itself\.$', 'OK：已暫停 ${d} 的 BitLocker，接下來 ${n} 次重新開機有效；之後會自動恢復。'),
+    @('^WARNING: BitLocker could not be suspended \((?<h>0x[0-9A-Fa-f]+)\)\.$', '警告：無法暫停 BitLocker（${h}）。'),
+    @('^WARNING: BitLocker could not be suspended: (?<m>.+)$', '警告：無法暫停 BitLocker：${m}'),
+    @('^Windows already has an update queued \(AvailableUpdates = (?<v>0x[0-9A-Fa-f]+)\); leaving it as is\.$', 'Windows 已有排隊的更新（AvailableUpdates = ${v}），保持原狀。'),
+    @('^Task: (?<t>.+)\.$', '排程工作：${t}。'),
+    @('^last run (?<d>[0-9-]+ [0-9:]+), result (?<r>0x[0-9A-Fa-f]+)$', '上次執行 ${d}，結果 ${r}'),
+    @('^(?<h>0x[0-9A-Fa-f]+) \(finished\)$', '${h}（已完成）'),
+    @('^(?<h>0x[0-9A-Fa-f]+) \(restart, then run again\)$', '${h}（重新開機後再執行一次）'),
+    @('^(?<h>0x[0-9A-Fa-f]+) \(update queued\)$', '${h}（已有排隊的更新）'),
+    @('^(?<n>.+) \(build (?<b>[0-9.]+)\)$', '${n}（組建 ${b}）'),
+    @('^unknown \((?<x>.*)\)$', '未知（${x}）'),
+    @('^Updated \(error (?<h>0x[0-9A-Fa-f]+)\)$', '已更新（錯誤 ${h}）'),
+    @('^InProgress \(error (?<h>0x[0-9A-Fa-f]+)\)$', '進行中（錯誤 ${h}）'),
+    @('^Error \(error (?<h>0x[0-9A-Fa-f]+)\)$', '錯誤（錯誤 ${h}）'),
+    @('^  \(more in the log below\)$', '（更多請見下方記錄）'),
+    @('^ERROR: (?<m>.+)$', '錯誤：${m}'),
+    @('^WARNING: (?<m>.+)$', '警告：${m}')
+)
+
+function Get-Zh([string]$t) {
+    if ($script:UiLang -ne 'zh-TW') { return $t }
+    if ([string]::IsNullOrEmpty($t)) { return $t }
+    if ($t.EndsWith(' Secure Boot is OFF.')) { return (Get-Zh $t.Substring(0, $t.Length - 20)) + ' 安全開機已關閉。' }
+    if ($script:Zh.ContainsKey($t)) { return $script:Zh[$t] }
+    if ($t -match '^Update in progress \(AvailableUpdates = (?<v>.+)\)\. Run the update again to start the next step\.$') {
+        return '更新進行中（AvailableUpdates = ' + $Matches.v + '）。請再執行一次更新以進行下一步。'
+    }
+    if ($t -match '^Partly updated\. Missing: (?<m>.+)\.$') { return '只完成一部分。缺少：' + ($Matches.m -replace ', ', '、') + '。' }
+    if ($t -match '^Setting AvailableUpdates = (?<v>0x[0-9A-Fa-f]+) \((?<w>.*)\)\.\.\.$') { return '正在設定 AvailableUpdates = ' + $Matches.v + '（' + (Get-Zh $Matches.w) + '）…' }
+    if ($t -match '^WARNING: Windows reported error (?<h>0x[0-9A-Fa-f]+)(?: - event (?<e>\d+): (?<m>.*))?$') {
+        $ev = ''
+        if ($Matches.e) { $ev = ' - 事件 ' + $Matches.e + '：' + (Get-Zh $Matches.m) }
+        return '警告：Windows 回報錯誤 ' + $Matches.h + $ev
+    }
+    if ($t -match '^Windows reported error (?<h>0x[0-9A-Fa-f]+)(?: \(event (?<e>\d+): (?<m>.*)\))?\.$') {
+        $ev = ''
+        if ($Matches.e) { $ev = '（事件 ' + $Matches.e + '：' + (Get-Zh $Matches.m) + '）' }
+        return 'Windows 回報錯誤 ' + $Matches.h + $ev + '。'
+    }
+    if ($t -match '^Windows update status: (?<s>.+)\.$') { return 'Windows 更新狀態：' + (Get-Zh $Matches.s) + '。' }
+    if ($t -match '^(?<p>Task): (?<t>.+)\.$') { return '排程工作：' + (Get-Zh $Matches.t) + '。' }
+    if ($t -match '^AvailableUpdates is now (?<v>.+)\.$') { return 'AvailableUpdates 現在是 ' + (Get-Zh $Matches.v) + '。' }
+    foreach ($r in $script:ZhRules) {
+        if ($t -match $r[0]) { return ($t -replace $r[0], $r[1]) }
+    }
+    return $t
+}
+
 # Runs in a background runspace: the engine plus these lines. $sync and $opts come from the window.
 $SbWorker = @'
 function Write-SbLog([string]$Text, [string]$Level = 'Info') { $sync.Queue.Enqueue($Text) }
@@ -759,7 +1002,7 @@ try {
             Start-Process -FilePath $exe -Verb RunAs -WindowStyle Hidden -ErrorAction Stop -ArgumentList "-NoProfile -ExecutionPolicy Bypass -STA -EncodedCommand $enc"
             exit 0
         } catch {
-            Write-Host 'Administrator rights are needed. Open the file again and accept the prompt.' -ForegroundColor Yellow
+            Write-Host (Get-Zh 'Administrator rights are needed. Open the file again and accept the prompt.') -ForegroundColor Yellow
             exit 1
         }
     }
@@ -847,7 +1090,7 @@ try {
     $form = New-Object System.Windows.Forms.Form
     $form.AutoScaleDimensions = New-Object System.Drawing.SizeF(96, 96)
     $form.AutoScaleMode = [System.Windows.Forms.AutoScaleMode]::Dpi
-    $form.Text = 'Secure Boot Certificate Updater v' + $SbVersion
+    $form.Text = (Get-Zh 'Secure Boot Certificate Updater') + ' v' + $SbVersion
     $screenH = [System.Windows.Forms.Screen]::PrimaryScreen.WorkingArea.Height
     $form.ClientSize = New-Object System.Drawing.Size(900, ([Math]::Max(600, [Math]::Min(740, $screenH - 60))))
     $form.MinimumSize = New-Object System.Drawing.Size(916, 620)
@@ -855,7 +1098,7 @@ try {
     $form.BackColor = $cBg; $form.ForeColor = $cText; $form.Font = $fText
     $tip = New-Object System.Windows.Forms.ToolTip
 
-    $lblTitle = New-Label 'Secure Boot Certificate Updater' 16 10 868 28
+    $lblTitle = New-Label (Get-Zh 'Secure Boot Certificate Updater') 16 10 868 28
     $lblTitle.Font = $fTitle; $lblTitle.Anchor = $AnchorTLR
     $lblSummary = New-Label '' 16 40 868 40
     $lblSummary.Font = $fBold; $lblSummary.Anchor = $AnchorTLR; $lblSummary.AutoEllipsis = $false
@@ -877,29 +1120,29 @@ try {
     # --- Certificates and events ---
     $tabs = New-Ctl 'TabControl' 16 214 868 150
     $tabs.Anchor = $AnchorTLR
-    $tabCerts = New-Object System.Windows.Forms.TabPage('Certificates in the firmware')
-    $tabEvents = New-Object System.Windows.Forms.TabPage('Recent Secure Boot events')
-    $lvCerts = New-List @(@('Store', 56), @('Certificate', 300), @('Expires', 92), @('Status', 96), @('Used for', 290))
-    $lvEvents = New-List @(@('Time', 130), @('Event', 60), @('Meaning', 640))
+    $tabCerts = New-Object System.Windows.Forms.TabPage((Get-Zh 'Certificates in the firmware'))
+    $tabEvents = New-Object System.Windows.Forms.TabPage((Get-Zh 'Recent Secure Boot events'))
+    $lvCerts = New-List @(@((Get-Zh 'Store'), 56), @((Get-Zh 'Certificate'), 300), @((Get-Zh 'Expires'), 92), @((Get-Zh 'Status'), 96), @((Get-Zh 'Used for'), 290))
+    $lvEvents = New-List @(@((Get-Zh 'Time'), 130), @((Get-Zh 'Event'), 60), @((Get-Zh 'Meaning'), 640))
     $tabCerts.Controls.Add($lvCerts); $tabEvents.Controls.Add($lvEvents)
     [void]$tabs.TabPages.Add($tabCerts); [void]$tabs.TabPages.Add($tabEvents)
     $form.Controls.Add($tabs)
 
     # --- What to do ---
-    $lblWhat = New-Label 'What to do:' 16 370 868 20
+    $lblWhat = New-Label (Get-Zh 'What to do:') 16 370 868 20
     $lblWhat.Font = $fBold
     $form.Controls.Add($lblWhat)
-    $chkDeploy = New-Check 'Install the 2023 Secure Boot certificates and boot manager (Microsoft''s full update)' 24 392 860 $true
-    $chkDbOnly = New-Check 'Old method: only add Windows UEFI CA 2023 to the DB (0x40), not the KEK or the boot manager' 48 414 836 $false
-    $chkKb     = New-Check ('Install ' + $SbKbId + ' first (only Windows 10 21H2/22H2 older than build .' + $SbKbUbr + ')') 24 436 860 $false
-    $chkWu     = New-Check 'Install all pending Windows updates first (software only; can take a long time)' 24 458 860 $false
-    $chkBl     = New-Check 'Suspend BitLocker for the next 2 restarts (it turns back on by itself)' 24 480 860 $false
+    $chkDeploy = New-Check (Get-Zh 'Install the 2023 Secure Boot certificates and boot manager (Microsoft''s full update)') 24 392 860 $true
+    $chkDbOnly = New-Check (Get-Zh 'Old method: only add Windows UEFI CA 2023 to the DB (0x40), not the KEK or the boot manager') 48 414 836 $false
+    $chkKb     = New-Check (Get-Zh ('Install ' + $SbKbId + ' first (only Windows 10 21H2/22H2 older than build .' + $SbKbUbr + ')')) 24 436 860 $false
+    $chkWu     = New-Check (Get-Zh 'Install all pending Windows updates first (software only; can take a long time)') 24 458 860 $false
+    $chkBl     = New-Check (Get-Zh 'Suspend BitLocker for the next 2 restarts (it turns back on by itself)') 24 480 860 $false
     foreach ($c in $chkDeploy, $chkDbOnly, $chkKb, $chkWu, $chkBl) { $form.Controls.Add($c) }
 
-    $btnRefresh = New-Btn 'Refresh' 16 508 120 38 $cGrey
-    $btnStart   = New-Btn 'Start update' 144 508 360 38 $cOrange
-    $btnRestart = New-Btn 'Restart now' 512 508 170 38 $cBlue
-    $btnLogs    = New-Btn 'Open log folder' 690 508 194 38 $cGrey
+    $btnRefresh = New-Btn (Get-Zh 'Refresh') 16 508 120 38 $cGrey
+    $btnStart   = New-Btn (Get-Zh 'Start update') 144 508 360 38 $cOrange
+    $btnRestart = New-Btn (Get-Zh 'Restart now') 512 508 170 38 $cBlue
+    $btnLogs    = New-Btn (Get-Zh 'Open log folder') 690 508 194 38 $cGrey
     $btnRestart.Enabled = $false
     foreach ($c in $btnRefresh, $btnStart, $btnRestart, $btnLogs) { $form.Controls.Add($c) }
 
@@ -909,12 +1152,13 @@ try {
     $txtLog.Anchor = $AnchorAll
     $form.Controls.Add($txtLog)
 
-    $lblFoot = New-Label 'Restarts are needed. If BitLocker is on, have the recovery key ready (aka.ms/myrecoverykey) or suspend it. Use at your own risk.' 16 ($form.ClientSize.Height - 26) 868 22
+    $lblFoot = New-Label (Get-Zh 'Restarts are needed. If BitLocker is on, have the recovery key ready (aka.ms/myrecoverykey) or suspend it. Use at your own risk.') 16 ($form.ClientSize.Height - 26) 868 22
     $lblFoot.ForeColor = $cMuted; $lblFoot.Anchor = $AnchorBLR
     $form.Controls.Add($lblFoot)
 
     # --- Helpers ---
     function Add-UiLog([string]$t) {
+        $t = Get-Zh $t
         $txtLog.AppendText($t + "`r`n")
         Write-LogFile $t
     }
@@ -953,7 +1197,7 @@ try {
         if (-not $chkBl.Enabled) { $chkBl.Checked = $false }
         $chkDbOnly.Enabled = ($chkDeploy.Enabled -and $chkDeploy.Checked)
         if (-not $chkDbOnly.Enabled) { $chkDbOnly.Checked = $false }
-        if ($st.Verdict -eq 'InProgress') { $btnStart.Text = 'Continue update' } else { $btnStart.Text = 'Start update' }
+        if ($st.Verdict -eq 'InProgress') { $btnStart.Text = (Get-Zh 'Continue update') } else { $btnStart.Text = (Get-Zh 'Start update') }
     }
 
     function Set-Busy([bool]$busy) {
@@ -969,7 +1213,7 @@ try {
 
     # Reads the state and fills the window
     function Update-View([bool]$resetDefaults = $true) {
-        Set-Value $lblSummary 'Reading the state...' $cMuted
+        Set-Value $lblSummary (Get-Zh 'Reading the state...') $cMuted
         $lblHint.Text = ''
         [System.Windows.Forms.Application]::DoEvents()
         $st = Get-SbState
@@ -978,9 +1222,10 @@ try {
         $rows = @(Get-SbStateRows $st)
         for ($i = 0; $i -lt $valLabels.Count; $i++) {
             if ($i -lt $rows.Count) {
-                $capLabels[$i].Text = $rows[$i].Caption
-                Set-Value $valLabels[$i] $rows[$i].Value (Get-LevelColor $rows[$i].Level)
-                $tip.SetToolTip($valLabels[$i], $rows[$i].Value)
+                $capLabels[$i].Text = (Get-Zh $rows[$i].Caption)
+                $rowVal = Get-Zh $rows[$i].Value
+                Set-Value $valLabels[$i] $rowVal (Get-LevelColor $rows[$i].Level)
+                $tip.SetToolTip($valLabels[$i], $rowVal)
             } else { $capLabels[$i].Text = ''; $valLabels[$i].Text = '' }
         }
 
@@ -989,8 +1234,8 @@ try {
             $it = New-Object System.Windows.Forms.ListViewItem($c.Store)
             [void]$it.SubItems.Add($c.Name)
             [void]$it.SubItems.Add($c.NotAfter.ToString('yyyy-MM-dd'))
-            [void]$it.SubItems.Add($c.Status)
-            [void]$it.SubItems.Add($c.Use)
+            [void]$it.SubItems.Add((Get-Zh $c.Status))
+            [void]$it.SubItems.Add((Get-Zh $c.Use))
             if ($c.Year -eq 2023) { if ($c.Status -eq 'Valid') { $it.ForeColor = $cGreen } else { $it.ForeColor = $cRed } }
             elseif ($c.Year -eq 2011) { $it.ForeColor = $cYellow }
             else { $it.ForeColor = $cMuted }
@@ -998,7 +1243,7 @@ try {
         }
         if (@($st.Certs).Count -eq 0) {
             $it = New-Object System.Windows.Forms.ListViewItem('-')
-            [void]$it.SubItems.Add('Could not read the certificates from the firmware (Secure Boot not available?)')
+            [void]$it.SubItems.Add((Get-Zh 'Could not read the certificates from the firmware (Secure Boot not available?)'))
             $it.ForeColor = $cMuted
             [void]$lvCerts.Items.Add($it)
         }
@@ -1008,7 +1253,7 @@ try {
         foreach ($e in $st.Events) {
             $it = New-Object System.Windows.Forms.ListViewItem($e.Time.ToString('yyyy-MM-dd HH:mm'))
             [void]$it.SubItems.Add([string]$e.Id)
-            [void]$it.SubItems.Add($e.Meaning)
+            [void]$it.SubItems.Add((Get-Zh $e.Meaning))
             if ($e.Id -in 1795, 1796, 1797, 1798, 1802, 1803, 1032) { $it.ForeColor = $cYellow }
             elseif ($e.Id -in 1808, 1799, 1036, 1043, 1044, 1045) { $it.ForeColor = $cGreen }
             [void]$lvEvents.Items.Add($it)
@@ -1016,18 +1261,19 @@ try {
         if (@($st.Events).Count -eq 0) {
             $it = New-Object System.Windows.Forms.ListViewItem('-')
             [void]$it.SubItems.Add('')
-            [void]$it.SubItems.Add('No Secure Boot servicing events in the System log')
+            [void]$it.SubItems.Add((Get-Zh 'No Secure Boot servicing events in the System log'))
             $it.ForeColor = $cMuted
             [void]$lvEvents.Items.Add($it)
         }
         $lvEvents.EndUpdate()
 
         $v = Get-SbVerdictText $st
-        Set-Value $lblSummary $v.Text (Get-LevelColor $v.Level)
-        $hints = @(Get-SbHints $st)
+        $vText = Get-Zh $v.Text
+        Set-Value $lblSummary $vText (Get-LevelColor $v.Level)
+        $hints = @(Get-SbHints $st | ForEach-Object { Get-Zh $_ })
         if ($hints.Count -gt 0) {
             $more = ''
-            if ($hints.Count -gt 1) { $more = '  (more in the log below)' }
+            if ($hints.Count -gt 1) { $more = Get-Zh '  (more in the log below)' }
             $lblHint.Text = $hints[0] + $more
             $tip.SetToolTip($lblHint, ($hints -join "`r`n"))
         }
@@ -1037,12 +1283,15 @@ try {
 
         # Full report in the log file, hints also in the window
         Write-LogFile ''
-        Write-LogFile ('--- State at ' + (Get-Date -Format 'yyyy-MM-dd HH:mm:ss') + ' ---')
-        foreach ($r in $rows) { Write-LogFile ('{0,-26} {1}' -f $r.Caption, $r.Value) }
-        foreach ($c in $st.Certs) { Write-LogFile ('[{0,-3}] {1,-38} {2:yyyy-MM-dd} {3}' -f $c.Store, $c.Name, $c.NotAfter, $c.Status) }
-        foreach ($e in $st.Events) { Write-LogFile ('{0:yyyy-MM-dd HH:mm} {1} {2}' -f $e.Time, $e.Id, $e.Meaning) }
-        Write-LogFile $v.Text
-        $txtLog.AppendText('State: ' + $v.Text + "`r`n")
+        Write-LogFile ((Get-Zh '--- State at ') + (Get-Date -Format 'yyyy-MM-dd HH:mm:ss') + ' ---')
+        foreach ($r in $rows) {
+            if ($script:UiLang -eq 'zh-TW') { Write-LogFile ((Get-Zh $r.Caption) + ' = ' + (Get-Zh $r.Value)) }
+            else { Write-LogFile ('{0,-26} {1}' -f (Get-Zh $r.Caption), (Get-Zh $r.Value)) }
+        }
+        foreach ($c in $st.Certs) { Write-LogFile ('[{0,-3}] {1,-38} {2:yyyy-MM-dd} {3}' -f $c.Store, $c.Name, $c.NotAfter, (Get-Zh $c.Status)) }
+        foreach ($e in $st.Events) { Write-LogFile ('{0:yyyy-MM-dd HH:mm} {1} {2}' -f $e.Time, $e.Id, (Get-Zh $e.Meaning)) }
+        Write-LogFile $vText
+        $txtLog.AppendText((Get-Zh 'State: ') + $vText + "`r`n")
         foreach ($h in $hints) { Add-UiLog ('  - ' + $h) }
     }
 
@@ -1099,22 +1348,28 @@ try {
         if ($script:Busy) { return }
         $o = @{ Deploy = $chkDeploy.Checked; DbOnly = $chkDbOnly.Checked; Kb = $chkKb.Checked; Wu = $chkWu.Checked; Bl = $chkBl.Checked }
         if (-not ($o.Deploy -or $o.Kb -or $o.Wu -or $o.Bl)) {
-            [void][System.Windows.Forms.MessageBox]::Show('Tick at least one action.', 'Secure Boot', 'OK', 'Information'); return
+            [void][System.Windows.Forms.MessageBox]::Show((Get-Zh 'Tick at least one action.'), (Get-Zh 'Secure Boot'), 'OK', 'Information'); return
         }
+        $zh = ($script:UiLang -eq 'zh-TW')
         $lines = @()
-        if ($o.Kb) { $lines += ('- install ' + $SbKbId) }
-        if ($o.Wu) { $lines += '- install all pending Windows updates' }
-        if ($o.Bl) { $lines += '- suspend BitLocker for 2 restarts' }
+        if ($o.Kb) { if ($zh) { $lines += ('- 安裝 ' + $SbKbId) } else { $lines += ('- install ' + $SbKbId) } }
+        if ($o.Wu) { if ($zh) { $lines += '- 安裝所有待處理的 Windows 更新' } else { $lines += '- install all pending Windows updates' } }
+        if ($o.Bl) { if ($zh) { $lines += '- 暫停 BitLocker 兩次重新開機' } else { $lines += '- suspend BitLocker for 2 restarts' } }
         if ($o.Deploy) {
-            if ($o.DbOnly) { $lines += '- add Windows UEFI CA 2023 to the Secure Boot DB (old method)' }
-            else { $lines += '- install the 2023 Secure Boot certificates and boot manager' }
+            if ($o.DbOnly) {
+                if ($zh) { $lines += '- 把 Windows UEFI CA 2023 加入安全開機 DB（舊方法）' } else { $lines += '- add Windows UEFI CA 2023 to the Secure Boot DB (old method)' }
+            } else {
+                if ($zh) { $lines += '- 安裝 2023 安全開機憑證與開機管理程式' } else { $lines += '- install the 2023 Secure Boot certificates and boot manager' }
+            }
         }
         $bl = ''
         if ($script:State -and $script:State.BitLocker.On -and -not $o.Bl) {
-            $bl = "`r`nBitLocker is ON and will not be suspended: have the 48-digit recovery key ready (aka.ms/myrecoverykey).`r`n"
+            if ($zh) { $bl = "`r`nBitLocker 已開啟且不會暫停：請備妥 48 位數復原金鑰（aka.ms/myrecoverykey）。`r`n" }
+            else { $bl = "`r`nBitLocker is ON and will not be suspended: have the 48-digit recovery key ready (aka.ms/myrecoverykey).`r`n" }
         }
-        $q = "This will:`r`n" + ($lines -join "`r`n") + "`r`n" + $bl + "`r`nDo not turn the PC off while it runs. Restarts are needed afterwards.`r`n`r`nContinue?"
-        if ([System.Windows.Forms.MessageBox]::Show($q, 'Secure Boot', 'YesNo', 'Warning') -ne 'Yes') { Add-UiLog 'Cancelled. Nothing was changed.'; return }
+        if ($zh) { $q = "將執行：`r`n" + ($lines -join "`r`n") + "`r`n" + $bl + "`r`n執行期間請勿關機；之後需要重新開機。`r`n`r`n要繼續嗎？" }
+        else { $q = "This will:`r`n" + ($lines -join "`r`n") + "`r`n" + $bl + "`r`nDo not turn the PC off while it runs. Restarts are needed afterwards.`r`n`r`nContinue?" }
+        if ([System.Windows.Forms.MessageBox]::Show($q, (Get-Zh 'Secure Boot'), 'YesNo', 'Warning') -ne 'Yes') { Add-UiLog 'Cancelled. Nothing was changed.'; return }
         Set-Busy $true
         Start-SbWorker $o
     }
@@ -1131,10 +1386,11 @@ try {
     })
     $btnRestart.Add_Click({
         try {
-            $q = "The PC will restart in 30 seconds.`r`n`r`nSave your work first. You can cancel by running:  shutdown /a`r`n`r`nAfter the restart, open this tool again to finish.`r`n`r`nRestart now?"
-            if ([System.Windows.Forms.MessageBox]::Show($q, 'Restart', 'YesNo', 'Warning') -eq 'Yes') {
+            if ($script:UiLang -eq 'zh-TW') { $q = "電腦將在 30 秒後重新開機。`r`n`r`n請先儲存工作；可用 shutdown /a 取消。`r`n`r`n重新開機後，請再開一次本工具完成後續步驟。`r`n`r`n要立即重新開機嗎？" }
+            else { $q = "The PC will restart in 30 seconds.`r`n`r`nSave your work first. You can cancel by running:  shutdown /a`r`n`r`nAfter the restart, open this tool again to finish.`r`n`r`nRestart now?" }
+            if ([System.Windows.Forms.MessageBox]::Show($q, (Get-Zh 'Restart'), 'YesNo', 'Warning') -eq 'Yes') {
                 Add-UiLog 'Restarting in 30 seconds (cancel with: shutdown /a)...'
-                & shutdown.exe /r /t 30 /c 'Secure Boot certificate update (Update-SecureBootCert)' | Out-Null
+                & shutdown.exe /r /t 30 /c (Get-Zh 'Secure Boot certificate update (Update-SecureBootCert)') | Out-Null
             }
         } catch { Add-UiLog ('ERROR: ' + $_.Exception.Message) }
     })
@@ -1144,13 +1400,13 @@ try {
     $form.Add_FormClosing({
         param($src, $evtArgs)
         if ($script:Busy) {
-            [void][System.Windows.Forms.MessageBox]::Show('The update is still running. Wait until it finishes, then close the window.', 'Secure Boot', 'OK', 'Information')
+            [void][System.Windows.Forms.MessageBox]::Show((Get-Zh 'The update is still running. Wait until it finishes, then close the window.'), (Get-Zh 'Secure Boot'), 'OK', 'Information')
             $evtArgs.Cancel = $true
         }
     })
 
-    Add-UiLog ('Secure Boot Certificate Updater v' + $SbVersion)
-    Add-UiLog 'Nothing is changed until you click Start update and confirm.'
+    Add-UiLog ((Get-Zh 'Secure Boot Certificate Updater') + ' v' + $SbVersion)
+    Add-UiLog (Get-Zh 'Nothing is changed until you click Start update and confirm.')
     if ($LogFile) { Add-UiLog ('Log file: ' + $LogFile) }
 
     $form.Add_Shown({
@@ -1159,7 +1415,7 @@ try {
     [void]$form.ShowDialog()
     exit 0
 } catch {
-    $msg = 'Unexpected error: ' + $_.Exception.Message + "`r`nLine " + $_.InvocationInfo.ScriptLineNumber
-    try { Add-Type -AssemblyName System.Windows.Forms; [void][System.Windows.Forms.MessageBox]::Show($msg, 'Secure Boot Certificate Updater', 'OK', 'Error') } catch { Write-Host $msg -ForegroundColor Red }
+    $msg = (Get-Zh 'Unexpected error: ') + $_.Exception.Message + "`r`n" + (Get-Zh 'Line ') + $_.InvocationInfo.ScriptLineNumber
+    try { Add-Type -AssemblyName System.Windows.Forms; [void][System.Windows.Forms.MessageBox]::Show($msg, (Get-Zh 'Secure Boot Certificate Updater'), 'OK', 'Error') } catch { Write-Host $msg -ForegroundColor Red }
     exit 1
 }

@@ -60,6 +60,8 @@
 
 ![開始更新前的確認視窗](docs/screenshots/gui-confirm.png)
 
+> **介面語言：** 如果 Windows 的顯示語言或系統地區設定是繁體中文（`zh-TW`、`zh-HK`、`zh-MO`），GUI 會自動使用繁體中文，記錄檔也一樣。設定環境變數 `SBGUI_LANG=en` 可強制英文，`SBGUI_LANG=zh-TW` 可強制繁體中文。下方截圖是英文介面。
+
 ---
 
 ## 2026 年憑證到期代表什麼
@@ -314,6 +316,10 @@ Get-WinEvent -FilterHashtable @{ LogName = 'System'; Id = 1036, 1043, 1799, 1800
 ## 更新紀錄
 
 目前版本：**2.0**。完整紀錄請見 [CHANGELOG.md](CHANGELOG.md)（英文）。
+
+### 未發布
+- **繁體中文介面：**Windows 使用繁體中文（`zh-TW`／`zh-HK`／`zh-MO`）時，GUI 的視窗、狀態列、摘要與建議、憑證與事件清單、訊息方塊及記錄檔都會使用繁體中文；`SBGUI_LANG=en` 可強制英文，`SBGUI_LANG=zh-TW` 可強制繁體中文。引擎與其記錄訊息未變動。
+- GUI 檔案改以 UTF-8（無 BOM）儲存，執行時與 GitHub Action 都明確以 UTF-8 讀取；批次檔開頭（`cmd.exe` 實際執行的行）、`Update-SecureBootCert.ps1` 與 `RunMe.bat` 仍保持 ASCII。
 
 ### 2.0 - 2026-10-23
 - **完整更新：**安裝所有 2023 憑證與以 2023 憑證簽署的開機管理員（`0x5944`），而不只是 Windows UEFI CA 2023。不會覆寫 Windows 已排入的更新。

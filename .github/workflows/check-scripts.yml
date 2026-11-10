@@ -16,10 +16,13 @@ jobs:
           $ErrorActionPreference = 'Stop'
           $files = 'Update-SecureBootCert.ps1', 'Update-SecureBootCert-GUI.cmd'
 
-          # 1. Both files must parse as PowerShell (the GUI's batch header is a block comment)
+          # 1. Both files must parse as PowerShell (the GUI's batch header is a block comment).
+          #    The GUI is UTF-8 without a BOM, so decode it as UTF-8 here - the same way the
+          #    launcher does at runtime (iex ([IO.File]::ReadAllText(..., [Text.Encoding]::UTF8))).
           foreach ($f in $files) {
               $tokens = $null; $errors = $null
-              [void][System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path $f).Path, [ref]$tokens, [ref]$errors)
+              $text = [IO.File]::ReadAllText((Resolve-Path $f).Path, [Text.Encoding]::UTF8)
+              [void][System.Management.Automation.Language.Parser]::ParseInput($text, [ref]$tokens, [ref]$errors)
               if ($errors) {
                   $errors | ForEach-Object { Write-Host ("{0}: line {1}: {2}" -f $f, $_.Extent.StartLineNumber, $_.Message) }
                   throw "Parse errors in $f"
@@ -28,18 +31,25 @@ jobs:
 
           # 2. The SB-ENGINE block must be identical in the script and the GUI
           function Get-Engine([string]$Path) {
-              $t = [IO.File]::ReadAllText((Resolve-Path $Path).Path)
+              $t = [IO.File]::ReadAllText((Resolve-Path $Path).Path, [Text.Encoding]::UTF8)
               $m = [regex]::Match($t, '(?s)# >>> SB-ENGINE BEGIN.*?# <<< SB-ENGINE END >>>')
               if (-not $m.Success) { throw "SB-ENGINE block not found in $Path" }
               $m.Value -replace "`r`n", "`n"
           }
           if ((Get-Engine $files[0]) -cne (Get-Engine $files[1])) { throw 'The SB-ENGINE blocks differ between the script and the GUI.' }
 
-          # 3. Only ASCII in the scripts (Windows PowerShell 5.1 misreads UTF-8 without a BOM)
-          foreach ($f in $files + 'RunMe.bat') {
+          # 3. The script and the launcher stay ASCII (Windows PowerShell 5.1 misreads UTF-8
+          #    without a BOM). The GUI carries the zh-TW strings, so only its batch header -
+          #    the part cmd.exe reads - must be ASCII, and it must not start with a BOM.
+          foreach ($f in $files[0], 'RunMe.bat') {
               $b = [IO.File]::ReadAllBytes((Resolve-Path $f).Path)
               if ($b | Where-Object { $_ -gt 127 } | Select-Object -First 1) { throw "$f contains non-ASCII characters" }
           }
+          $gui = [IO.File]::ReadAllBytes((Resolve-Path $files[1]).Path)
+          if ($gui.Length -ge 3 -and $gui[0] -eq 0xEF -and $gui[1] -eq 0xBB -and $gui[2] -eq 0xBF) { throw 'The GUI must not start with a BOM.' }
+          $guiText = [Text.Encoding]::UTF8.GetString($gui)
+          $header = $guiText.Substring(0, $guiText.IndexOf('#>') + 2)
+          if ($header -match '[^\x00-\x7F]') { throw 'The GUI batch header (the lines cmd.exe runs) must stay ASCII.' }
 
           # 4. PSScriptAnalyzer (errors only)
           if (-not (Get-Module -ListAvailable PSScriptAnalyzer)) {

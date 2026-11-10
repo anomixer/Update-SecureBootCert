@@ -60,6 +60,8 @@ Nothing is changed until you click **Start update** and confirm.
 
 ![Confirmation before the update starts](docs/screenshots/gui-confirm.png)
 
+> **Window language:** when Windows is set to Traditional Chinese (`zh-TW`, `zh-HK` or `zh-MO`), the GUI and its log file are in Traditional Chinese. Set `SBGUI_LANG=en` to force English, or `SBGUI_LANG=zh-TW` to force Traditional Chinese. The screenshots show the English window.
+
 ---
 
 ## What the 2026 expiry means

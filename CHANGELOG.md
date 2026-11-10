@@ -2,6 +2,14 @@
 
 All notable changes to this project are listed here, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions use `major.minor` (and `.patch` for small fixes).
 
+## [Unreleased]
+
+### Added
+- **Traditional Chinese (zh-TW) window.** When Windows is set to Traditional Chinese (`zh-TW`, `zh-HK` or `zh-MO`), the GUI uses Traditional Chinese for everything it shows: the window, the state rows, the summary and hints, the certificate and event lists, the message boxes and the log file. `SBGUI_LANG=en` forces English and `SBGUI_LANG=zh-TW` forces Traditional Chinese (handy for screenshots). The engine and its log messages are unchanged, so the `SB-ENGINE` block still matches the script.
+
+### Changed
+- The GUI file is now UTF-8 without a BOM; it is read as UTF-8 both at runtime (`iex ([IO.File]::ReadAllText(..., [Text.Encoding]::UTF8))`) and by the GitHub Action. Its batch header (the lines `cmd.exe` runs) and the script and `RunMe.bat` stay ASCII. The Action now checks exactly that instead of requiring the whole GUI to be ASCII.
+
 ## [2.0] - 2026-10-23
 
 A rewrite of the script and the GUI. Both now share the same engine (the `SB-ENGINE` block, kept identical in both files and checked by a GitHub Action).
@@ -25,7 +33,7 @@ A rewrite of the script and the GUI. Both now share the same engine (the `SB-ENG
 - Script: the restart flag set after installing KB5073724 was reset by the next step.
 - **Windows Server 2016/2019/2022 was treated as Windows 10** (build below 22000) and offered KB5073724.
 - Script: it said "2023 certificates are already installed" based on the Windows certificate store (`Cert:\LocalMachine\Root`), which has nothing to do with Secure Boot. Those checks are removed.
-- Script: `√` characters showed as garbage in Windows PowerShell 5.1 (UTF-8 file without BOM). All scripts are plain ASCII now.
+- Script: `√` characters showed as garbage in Windows PowerShell 5.1 (UTF-8 file without BOM). The script and `RunMe.bat` are plain ASCII now; the GUI is read as UTF-8 explicitly.
 - RunMe.bat: endless UAC prompts when the Server service was disabled (`net session`), and paths containing `'` broke the elevation.
 - Error codes are shown as `0x80070490` instead of negative numbers.
 
@@ -36,7 +44,7 @@ A rewrite of the script and the GUI. Both now share the same engine (the `SB-ENG
 - Log files in `%ProgramData%\Update-SecureBootCert` (script transcript and GUI log).
 - Parameters: `-CheckOnly`, `-Unattended`, `-InstallWindowsUpdates`, `-SkipKB`, `-DbOnly`, `-SuspendBitLocker`, `-Restart`, `-NoPause`, `-LogPath`.
 - Exit codes: 0 up to date, 1 error, 2 update needed or not finished, 3 cancelled, 3010 restart needed.
-- GitHub Action (`.github/workflows/check-scripts.yml`): parses both files, checks that the engine blocks are identical and that the scripts are ASCII, and runs PSScriptAnalyzer.
+- GitHub Action (`.github/workflows/check-scripts.yml`): parses both files, checks that the engine blocks are identical, checks that the script and `RunMe.bat` are ASCII and that the GUI's batch header is ASCII, and runs PSScriptAnalyzer.
 - `.gitattributes` keeps CRLF line endings for all `.bat`, `.cmd` and `.ps1` files.
 
 ### Removed
