@@ -7,7 +7,7 @@
 
 [English](./README.md)
 
-![version](https://img.shields.io/badge/version-2.0-orange) ![platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011%20%7C%20Server-blue)
+![version](https://img.shields.io/badge/version-2.1-orange) ![platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011%20%7C%20Server-blue)
 
 ## 📑 目錄
 
@@ -60,7 +60,7 @@
 
 ![開始更新前的確認視窗](docs/screenshots/gui-confirm.png)
 
-> **介面語言：** 如果 Windows 的顯示語言或系統地區設定是繁體中文（`zh-TW`、`zh-HK`、`zh-MO`），GUI 會自動使用繁體中文，記錄檔也一樣。設定環境變數 `SBGUI_LANG=en` 可強制英文，`SBGUI_LANG=zh-TW` 可強制繁體中文。下方截圖是英文介面。
+> **介面語言：** 視窗右上角的按鈕可切換英文與繁體中文，記錄檔也會跟著改變。如果 Windows 的顯示語言或系統地區設定是繁體中文（`zh-TW`、`zh-HK`、`zh-MO`），視窗會以繁體中文開啟，否則為英文；環境變數 `SBGUI_LANG=en` 或 `SBGUI_LANG=zh-TW` 可指定開啟時的語言。下方截圖是英文介面。
 
 ---
 
@@ -137,7 +137,7 @@
 
 ```powershell
 .\Update-SecureBootCert.ps1 [-CheckOnly] [-Unattended] [-InstallWindowsUpdates] [-SkipKB]
-                            [-DbOnly] [-SuspendBitLocker] [-Restart] [-NoPause] [-LogPath <檔案>]
+                            [-DbOnly] [-SuspendBitLocker] [-Restart] [-NoPause] [-Lang <auto|en|zh-TW>] [-LogPath <檔案>]
 ```
 
 | 參數 | 作用 |
@@ -150,9 +150,12 @@
 | `-SuspendBitLocker` | 暫停 BitLocker 接下來 2 次重新開機 |
 | `-Restart` | 需要時自動重新開機（30 秒後） |
 | `-NoPause` | 結束時不等待按 Enter |
+| `-Lang` | 介面語言：`auto`（Windows 為 zh-TW/HK/MO 時用繁體中文）、`en` 或 `zh-TW` |
 | `-LogPath` | 記錄檔的位置 |
 
-`RunMe.bat` 會將參數傳遞給腳本，例如 `RunMe.bat -CheckOnly`。
+`RunMe.bat` 會將參數傳遞給腳本，例如 `RunMe.bat -CheckOnly` 或 `RunMe.bat -Lang zh-TW`。
+
+輸出語言跟隨 Windows 語言，除非您指定 `-Lang`；環境變數 `SB_LANG=en` 或 `SB_LANG=zh-TW` 與參數等效。腳本與其記錄檔就會使用英文或繁體中文。
 
 **結束代碼**
 
@@ -307,7 +310,7 @@ Get-WinEvent -FilterHashtable @{ LogName = 'System'; Id = 1036, 1043, 1799, 1800
 
 ## 致謝
 
-原始工具作者 **anomixer**。GUI（1.2）與 2.0 版由 **j0p3s** 製作。
+原始工具作者 **anomixer**。GUI（1.2）與 2.0 版由 **j0p3s** 製作；2.1 版與中英雙語介面由 **anomixer** 製作。
 
 使用風險自負。變更 Secure Boot 設定會影響電腦的開機方式。
 
@@ -315,11 +318,19 @@ Get-WinEvent -FilterHashtable @{ LogName = 'System'; Id = 1036, 1043, 1799, 1800
 
 ## 更新紀錄
 
-目前版本：**2.0**。完整紀錄請見 [CHANGELOG.md](CHANGELOG.md)（英文）。
+目前版本：**2.1**。完整紀錄請見 [CHANGELOG.md](CHANGELOG.md)（英文）。
 
-### 未發布
-- **繁體中文介面：**Windows 使用繁體中文（`zh-TW`／`zh-HK`／`zh-MO`）時，GUI 的視窗、狀態列、摘要與建議、憑證與事件清單、訊息方塊及記錄檔都會使用繁體中文；`SBGUI_LANG=en` 可強制英文，`SBGUI_LANG=zh-TW` 可強制繁體中文。引擎與其記錄訊息未變動。
-- GUI 檔案改以 UTF-8（無 BOM）儲存，執行時與 GitHub Action 都明確以 UTF-8 讀取；批次檔開頭（`cmd.exe` 實際執行的行）、`Update-SecureBootCert.ps1` 與 `RunMe.bat` 仍保持 ASCII。
+### 2.1 - 2026-11-11
+- **中英雙語介面（GUI 與腳本都有）：**
+  - **GUI：**視窗右上角的按鈕可即時切換英文與繁體中文；Windows 為 `zh-TW`／`zh-HK`／`zh-MO` 時以繁體中文開啟，環境變數 `SBGUI_LANG` 可指定開啟時的語言。
+  - **腳本：**`-Lang auto|en|zh-TW`（或 `SB_LANG=zh-TW`），預設同樣自動判斷；`RunMe.bat` 會傳遞參數，因此 `RunMe.bat -Lang zh-TW` 可用。
+  - 翻譯涵蓋視窗、狀態列、摘要與建議、憑證與事件清單、訊息方塊、提示與記錄檔；憑證名稱、產品名稱與錯誤代碼維持原文。
+  - 對照表與 `Get-Zh`／`Get-SbText` 放在共用的 `SB-ENGINE` 區塊，腳本與 GUI 仍共用同一份；引擎字串未變動。
+- **檔案編碼：**GUI 為 UTF-8（無 BOM），執行時與 GitHub Action 都以 UTF-8 讀取；`Update-SecureBootCert.ps1` 改為 UTF-8 **含 BOM**（否則 Windows PowerShell 5.1 會讀錯中文），`RunMe.bat` 維持 ASCII。GitHub Action 改為檢查這些規則。
+- `RunMe.bat` 自己在腳本輸出後顯示的幾行狀態訊息仍為英文；腳本、提示與記錄檔則跟隨 `-Lang`。
+- **只用 HTTPS：**從 Microsoft Update Catalog 下載不再退回純 HTTP。
+- `0x5944` 是 Microsoft 文件（KB 5068202）說明的完整更新值，程式註解已補上出處。
+- **修正：**語言切換鈕原本被標題文字蓋住，視窗上完全看不到；現在它畫在最上層並固定在右緣，視窗放大縮小都看得到。
 
 ### 2.0 - 2026-10-23
 - **完整更新：**安裝所有 2023 憑證與以 2023 憑證簽署的開機管理員（`0x5944`），而不只是 Windows UEFI CA 2023。不會覆寫 Windows 已排入的更新。

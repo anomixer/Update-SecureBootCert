@@ -1,7 +1,7 @@
 <# : batch
 @echo off
 REM ---------------------------------------------------------------------------
-REM  Secure Boot Certificate Updater (GUI) v2.0 - batch/PowerShell hybrid launcher.
+REM  Secure Boot Certificate Updater (GUI) v2.1 - batch/PowerShell hybrid launcher.
 REM  cmd.exe runs only these few lines; to PowerShell, this whole header is a
 REM  block comment. The batch part passes this file's own path to
 REM  Windows PowerShell, which reads the rest of the file and opens the window.
@@ -18,7 +18,7 @@ exit /b
 #>
 
 # =============================================================================
-#  Secure Boot Certificate Updater - GUI v2.0
+#  Secure Boot Certificate Updater - GUI v2.1
 #
 #  A window for Update-SecureBootCert.ps1 (same engine, same steps):
 #    - shows Secure Boot, Windows' own update status, the certificates in the
@@ -42,11 +42,11 @@ $SbEngine = @'
 # Shared by the script and the GUI. Functions that report progress call Write-SbLog,
 # which the script and the GUI each define for themselves.
 
-$SbVersion   = '2.0'
+$SbVersion   = '2.1'
 $SbKey       = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecureBoot'
 $SbTaskPath  = '\Microsoft\Windows\PI\'
 $SbTaskName  = 'Secure-Boot-Update'
-$SbFullValue = 0x5944   # Microsoft's value for the full update: 2023 KEK, 2023 DB certificates, 2023-signed boot manager
+$SbFullValue = 0x5944   # Microsoft's value for the full update: 2023 KEK, 2023 DB certificates, 2023-signed boot manager (KB 5068202)
 $SbDbValue   = 0x40     # Old method (v1.x): only adds Windows UEFI CA 2023 to the DB
 $SbKbId      = 'KB5073724'
 $SbKbUbr     = 6809     # Windows 10 build 1904x.6809 = KB5073724
@@ -520,10 +520,10 @@ function Install-SbWin10Update($State) {
 
         $json = '[{"size":0,"languages":"","uidInfo":"' + $id + '","updateID":"' + $id + '"}]'
         $dlg = Invoke-WebRequest -Uri 'https://www.catalog.update.microsoft.com/DownloadDialog.aspx' -Method Post -Body @{ updateIDs = $json } -UseBasicParsing -ErrorAction Stop
-        $urls = @([regex]::Matches($dlg.Content, 'https?://[^''"\s<>]+?\.(?:msu|cab)\b') | ForEach-Object { $_.Value } | Select-Object -Unique)
+        $urls = @([regex]::Matches($dlg.Content, 'https://[^''"\s<>]+?\.(?:msu|cab)\b') | ForEach-Object { $_.Value } | Select-Object -Unique)
         $url = $urls | Where-Object { $_ -match '\.msu$' } | Select-Object -First 1
         if (-not $url) { $url = $urls | Select-Object -First 1 }
-        if (-not $url) { Write-SbLog 'ERROR: the Catalog did not return a download link.' 'Error'; $res.Ok = $false; return $res }
+        if (-not $url) { Write-SbLog 'ERROR: the Catalog did not return an HTTPS download link.' 'Error'; $res.Ok = $false; return $res }
         $urlHost = ([uri]$url).Host
         if ($urlHost -notmatch '(^|\.)(windowsupdate\.com|microsoft\.com)$') {
             Write-SbLog ('ERROR: unexpected download host ' + $urlHost + '; not downloading.') 'Error'; $res.Ok = $false; return $res
@@ -534,7 +534,7 @@ function Install-SbWin10Update($State) {
         Write-SbLog ('Downloading ' + [IO.Path]::GetFileName($file) + ' (several hundred MB, please wait)...') 'Step'
         $wc = New-Object System.Net.WebClient
         try {
-            try { $wc.DownloadFile(($url -replace '^http://', 'https://'), $file) } catch { $wc.DownloadFile($url, $file) }
+            $wc.DownloadFile($url, $file)
         } finally { $wc.Dispose() }
 
         $sig = Get-AuthenticodeSignature -FilePath $file
@@ -692,22 +692,12 @@ function Start-SbDeployment($State, [switch]$DbOnly) {
     $res
 }
 
-# <<< SB-ENGINE END >>>
-'@
-. ([scriptblock]::Create($SbEngine))
-
-# ===== Traditional Chinese (zh-TW) =====
-# Windows set to Traditional Chinese (zh-TW/HK/MO) shows the window in Traditional
-# Chinese; otherwise it stays English. SBGUI_LANG=zh-TW or SBGUI_LANG=en overrides.
-$script:UiLang = 'en'
-try {
-    $cc = [System.Globalization.CultureInfo]::CurrentCulture
-    $uc = [System.Globalization.CultureInfo]::CurrentUICulture
-    if (($cc.Name -match '^zh-(TW|HK|MO)$') -or ($uc.Name -match '^zh-(TW|HK|MO)$')) { $script:UiLang = 'zh-TW' }
-} catch { }
-if ($env:SBGUI_LANG -in 'zh-TW', 'zh', 'zh-HK', 'zh-MO') { $script:UiLang = 'zh-TW' }
-elseif ($env:SBGUI_LANG -eq 'en') { $script:UiLang = 'en' }
-
+# ----- Traditional Chinese (zh-TW) -----
+# Text for both front-ends. Everything is English unless $script:UiLang is 'zh-TW';
+# the GUI's language toggle, the script's -Lang parameter, SBGUI_LANG / SB_LANG, or the
+# Windows language set it. Get-Zh translates text the engine produces (state rows,
+# verdict, hints, certificate and event descriptions, log lines); Get-SbText picks
+# between an English and a Chinese string for a front-end's own messages.
 $script:Zh = @{
     # --- window ---
     'Secure Boot Certificate Updater'                            = '安全開機憑證更新工具'
@@ -756,7 +746,7 @@ $script:Zh = @{
     'Windows UEFI CA 2023 (DB)'                                  = 'Windows UEFI CA 2023（DB）'
     '2023 boot manager'                                          = '2023 開機管理程式'
     'Windows update status'                                      = 'Windows 更新狀態'
-    'Secure-Boot-Update task'                                    = 'Secure-Boot-Update 排程工作'
+    'Secure-Boot-Update task'                                    = 'Secure-Boot-Update 工作'
     'Restart pending'                                            = '有待重新開機'
     'Enabled'                                                    = '已啟用'
     'DISABLED'                                                   = '已停用'
@@ -900,7 +890,7 @@ $script:ZhRules = @(
     @('^(?<h>0x[0-9A-Fa-f]+) \(finished\)$', '${h}（已完成）'),
     @('^(?<h>0x[0-9A-Fa-f]+) \(restart, then run again\)$', '${h}（重新開機後再執行一次）'),
     @('^(?<h>0x[0-9A-Fa-f]+) \(update queued\)$', '${h}（已有排隊的更新）'),
-    @('^(?<n>.+) \(build (?<b>[0-9.]+)\)$', '${n}（組建 ${b}）'),
+    @('^(?<n>.+) \(build (?<b>[0-9.]+)\)$', '${n}（${b}）'),
     @('^unknown \((?<x>.*)\)$', '未知（${x}）'),
     @('^Updated \(error (?<h>0x[0-9A-Fa-f]+)\)$', '已更新（錯誤 ${h}）'),
     @('^InProgress \(error (?<h>0x[0-9A-Fa-f]+)\)$', '進行中（錯誤 ${h}）'),
@@ -938,6 +928,27 @@ function Get-Zh([string]$t) {
     }
     return $t
 }
+
+function Get-SbText([string]$En, [string]$Zh) {
+    if ($script:UiLang -eq 'zh-TW') { return $Zh }
+    $En
+}
+# <<< SB-ENGINE END >>>
+'@
+. ([scriptblock]::Create($SbEngine))
+
+# ===== Interface language (English / 繁體中文) =====
+# The window starts in Traditional Chinese when Windows is set to zh-TW/HK/MO, and in
+# English otherwise. SBGUI_LANG=zh-TW (or zh, zh-HK, zh-MO) or SBGUI_LANG=en sets it,
+# and the toggle at the top right switches it while the window is open.
+$script:UiLang = 'en'
+try {
+    $cc = [System.Globalization.CultureInfo]::CurrentCulture
+    $uc = [System.Globalization.CultureInfo]::CurrentUICulture
+    if (($cc.Name -match '^zh-(TW|HK|MO)$') -or ($uc.Name -match '^zh-(TW|HK|MO)$')) { $script:UiLang = 'zh-TW' }
+} catch { }
+if ($env:SBGUI_LANG -in 'zh-TW', 'zh', 'zh-HK', 'zh-MO') { $script:UiLang = 'zh-TW' }
+elseif ($env:SBGUI_LANG -eq 'en') { $script:UiLang = 'en' }
 
 # Runs in a background runspace: the engine plus these lines. $sync and $opts come from the window.
 $SbWorker = @'
@@ -1052,6 +1063,7 @@ try {
 
     $AnchorTL   = [System.Windows.Forms.AnchorStyles]'Top, Left'
     $AnchorTLR  = [System.Windows.Forms.AnchorStyles]'Top, Left, Right'
+    $AnchorTR   = [System.Windows.Forms.AnchorStyles]'Top, Right'
     $AnchorAll  = [System.Windows.Forms.AnchorStyles]'Top, Bottom, Left, Right'
     $AnchorBLR  = [System.Windows.Forms.AnchorStyles]'Bottom, Left, Right'
 
@@ -1064,25 +1076,27 @@ try {
     }
     function New-Btn($text, $x, $y, $w, $h, $color) {
         $b = New-Ctl 'Button' $x $y $w $h
-        $b.Text = $text; $b.FlatStyle = 'Flat'; $b.BackColor = $color; $b.ForeColor = [System.Drawing.Color]::White
+        $b.Tag = $text; $b.Text = (Get-Zh $text)
+        $b.FlatStyle = 'Flat'; $b.BackColor = $color; $b.ForeColor = [System.Drawing.Color]::White
         $b.Font = $fBold; $b.FlatAppearance.BorderSize = 0; $b.Cursor = [System.Windows.Forms.Cursors]::Hand
         $b
     }
     function New-Label($text, $x, $y, $w, $h) {
         $l = New-Ctl 'Label' $x $y $w $h
-        $l.Text = $text; $l.ForeColor = $cText; $l.AutoEllipsis = $true
+        $l.Tag = $text; $l.Text = (Get-Zh $text); $l.ForeColor = $cText; $l.AutoEllipsis = $true
         $l
     }
     function New-Check($text, $x, $y, $w, $checked) {
         $c = New-Ctl 'CheckBox' $x $y $w 22
-        $c.Text = $text; $c.Checked = $checked; $c.ForeColor = $cText
+        $c.Tag = $text; $c.Text = (Get-Zh $text); $c.Checked = $checked; $c.ForeColor = $cText
         $c
     }
     function New-List($columns) {
         $lv = New-Object System.Windows.Forms.ListView
         $lv.Dock = 'Fill'; $lv.View = 'Details'; $lv.FullRowSelect = $true; $lv.HideSelection = $true
         $lv.BackColor = $cBox; $lv.ForeColor = $cText; $lv.Font = $fText; $lv.HeaderStyle = 'Nonclickable'
-        foreach ($col in $columns) { [void]$lv.Columns.Add($col[0], $col[1]) }
+        $lv.Tag = $columns
+        foreach ($col in $columns) { [void]$lv.Columns.Add((Get-Zh $col[0]), $col[1]) }
         $lv
     }
 
@@ -1098,8 +1112,8 @@ try {
     $form.BackColor = $cBg; $form.ForeColor = $cText; $form.Font = $fText
     $tip = New-Object System.Windows.Forms.ToolTip
 
-    $lblTitle = New-Label (Get-Zh 'Secure Boot Certificate Updater') 16 10 868 28
-    $lblTitle.Font = $fTitle; $lblTitle.Anchor = $AnchorTLR
+    $lblTitle = New-Label 'Secure Boot Certificate Updater' 16 10 730 28
+    $lblTitle.Font = $fTitle; $lblTitle.Anchor = $AnchorTL
     $lblSummary = New-Label '' 16 40 868 40
     $lblSummary.Font = $fBold; $lblSummary.Anchor = $AnchorTLR; $lblSummary.AutoEllipsis = $false
     $lblHint = New-Label '' 16 82 868 18
@@ -1111,8 +1125,8 @@ try {
     for ($i = 0; $i -lt 10; $i++) {
         $col = [int][Math]::Floor($i / 5); $row = $i % 5
         $x = 16 + $col * 440; $y = 104 + $row * 21
-        $cap = New-Label '' $x $y 164 20; $cap.ForeColor = $cMuted
-        $val = New-Label '' ($x + 166) $y 262 20
+        $cap = New-Label '' $x $y 176 20; $cap.ForeColor = $cMuted
+        $val = New-Label '' ($x + 178) $y 250 20
         $form.Controls.Add($cap); $form.Controls.Add($val)
         $capLabels += $cap; $valLabels += $val
     }
@@ -1120,31 +1134,38 @@ try {
     # --- Certificates and events ---
     $tabs = New-Ctl 'TabControl' 16 214 868 150
     $tabs.Anchor = $AnchorTLR
-    $tabCerts = New-Object System.Windows.Forms.TabPage((Get-Zh 'Certificates in the firmware'))
-    $tabEvents = New-Object System.Windows.Forms.TabPage((Get-Zh 'Recent Secure Boot events'))
-    $lvCerts = New-List @(@((Get-Zh 'Store'), 56), @((Get-Zh 'Certificate'), 300), @((Get-Zh 'Expires'), 92), @((Get-Zh 'Status'), 96), @((Get-Zh 'Used for'), 290))
-    $lvEvents = New-List @(@((Get-Zh 'Time'), 130), @((Get-Zh 'Event'), 60), @((Get-Zh 'Meaning'), 640))
+    $tabCerts = New-Object System.Windows.Forms.TabPage('Certificates in the firmware')
+    $tabEvents = New-Object System.Windows.Forms.TabPage('Recent Secure Boot events')
+    foreach ($tp in $tabCerts, $tabEvents) { $tp.Tag = $tp.Text; $tp.Text = (Get-Zh $tp.Tag) }
+    $lvCerts = New-List @(@('Store', 56), @('Certificate', 300), @('Expires', 92), @('Status', 96), @('Used for', 290))
+    $lvEvents = New-List @(@('Time', 130), @('Event', 60), @('Meaning', 640))
     $tabCerts.Controls.Add($lvCerts); $tabEvents.Controls.Add($lvEvents)
     [void]$tabs.TabPages.Add($tabCerts); [void]$tabs.TabPages.Add($tabEvents)
     $form.Controls.Add($tabs)
 
     # --- What to do ---
-    $lblWhat = New-Label (Get-Zh 'What to do:') 16 370 868 20
+    $lblWhat = New-Label 'What to do:' 16 370 868 20
     $lblWhat.Font = $fBold
     $form.Controls.Add($lblWhat)
-    $chkDeploy = New-Check (Get-Zh 'Install the 2023 Secure Boot certificates and boot manager (Microsoft''s full update)') 24 392 860 $true
-    $chkDbOnly = New-Check (Get-Zh 'Old method: only add Windows UEFI CA 2023 to the DB (0x40), not the KEK or the boot manager') 48 414 836 $false
-    $chkKb     = New-Check (Get-Zh ('Install ' + $SbKbId + ' first (only Windows 10 21H2/22H2 older than build .' + $SbKbUbr + ')')) 24 436 860 $false
-    $chkWu     = New-Check (Get-Zh 'Install all pending Windows updates first (software only; can take a long time)') 24 458 860 $false
-    $chkBl     = New-Check (Get-Zh 'Suspend BitLocker for the next 2 restarts (it turns back on by itself)') 24 480 860 $false
+    $chkDeploy = New-Check 'Install the 2023 Secure Boot certificates and boot manager (Microsoft''s full update)' 24 392 860 $true
+    $chkDbOnly = New-Check 'Old method: only add Windows UEFI CA 2023 to the DB (0x40), not the KEK or the boot manager' 48 414 836 $false
+    $chkKb     = New-Check ('Install ' + $SbKbId + ' first (only Windows 10 21H2/22H2 older than build .' + $SbKbUbr + ')') 24 436 860 $false
+    $chkWu     = New-Check 'Install all pending Windows updates first (software only; can take a long time)' 24 458 860 $false
+    $chkBl     = New-Check 'Suspend BitLocker for the next 2 restarts (it turns back on by itself)' 24 480 860 $false
     foreach ($c in $chkDeploy, $chkDbOnly, $chkKb, $chkWu, $chkBl) { $form.Controls.Add($c) }
 
-    $btnRefresh = New-Btn (Get-Zh 'Refresh') 16 508 120 38 $cGrey
-    $btnStart   = New-Btn (Get-Zh 'Start update') 144 508 360 38 $cOrange
-    $btnRestart = New-Btn (Get-Zh 'Restart now') 512 508 170 38 $cBlue
-    $btnLogs    = New-Btn (Get-Zh 'Open log folder') 690 508 194 38 $cGrey
+    $btnRefresh = New-Btn 'Refresh' 16 508 120 38 $cGrey
+    $btnStart   = New-Btn 'Start update' 144 508 360 38 $cOrange
+    $btnRestart = New-Btn 'Restart now' 512 508 170 38 $cBlue
+    $btnLogs    = New-Btn 'Open log folder' 690 508 194 38 $cGrey
     $btnRestart.Enabled = $false
     foreach ($c in $btnRefresh, $btnStart, $btnRestart, $btnLogs) { $form.Controls.Add($c) }
+
+    # Language toggle (top right): shows the language you switch to
+    $btnLang = New-Btn (Get-SbText '繁體中文' 'English') 762 8 122 24 $cGrey
+    $btnLang.Font = $fText; $btnLang.Tag = ''; $btnLang.Anchor = $AnchorTR
+    $form.Controls.Add($btnLang)
+    $btnLang.BringToFront()   # the title label spans the same row; without this the button is drawn behind it
 
     $txtLog = New-Ctl 'TextBox' 16 554 868 ($form.ClientSize.Height - 554 - 30)
     $txtLog.Multiline = $true; $txtLog.ReadOnly = $true; $txtLog.ScrollBars = 'Vertical'
@@ -1152,7 +1173,7 @@ try {
     $txtLog.Anchor = $AnchorAll
     $form.Controls.Add($txtLog)
 
-    $lblFoot = New-Label (Get-Zh 'Restarts are needed. If BitLocker is on, have the recovery key ready (aka.ms/myrecoverykey) or suspend it. Use at your own risk.') 16 ($form.ClientSize.Height - 26) 868 22
+    $lblFoot = New-Label 'Restarts are needed. If BitLocker is on, have the recovery key ready (aka.ms/myrecoverykey) or suspend it. Use at your own risk.' 16 ($form.ClientSize.Height - 26) 868 22
     $lblFoot.ForeColor = $cMuted; $lblFoot.Anchor = $AnchorBLR
     $form.Controls.Add($lblFoot)
 
@@ -1175,7 +1196,7 @@ try {
     # Enables the options that make sense for the current state
     function Set-OptionState([bool]$resetDefaults) {
         $st = $script:State
-        $btnRefresh.Enabled = $true; $btnStart.Enabled = $true; $btnLogs.Enabled = $true
+        $btnRefresh.Enabled = $true; $btnStart.Enabled = $true; $btnLogs.Enabled = $true; $btnLang.Enabled = $true
         $btnRestart.Enabled = [bool]$script:NeedsRestart
         if (-not $st) { return }
         $canAct = ($st.Verdict -ne 'NoUefi')
@@ -1204,7 +1225,7 @@ try {
         $script:Busy = $busy
         $form.UseWaitCursor = $busy
         if ($busy) {
-            foreach ($c in $btnRefresh, $btnStart, $btnRestart, $chkDeploy, $chkDbOnly, $chkKb, $chkWu, $chkBl) { $c.Enabled = $false }
+            foreach ($c in $btnRefresh, $btnStart, $btnRestart, $btnLang, $chkDeploy, $chkDbOnly, $chkKb, $chkWu, $chkBl) { $c.Enabled = $false }
         } else {
             Set-OptionState $false
         }
@@ -1295,6 +1316,25 @@ try {
         foreach ($h in $hints) { Add-UiLog ('  - ' + $h) }
     }
 
+    # Switches every text in the window to the current language and re-reads the state
+    function Update-UiLanguage {
+        foreach ($c in $lblTitle, $lblWhat, $chkDeploy, $chkDbOnly, $chkKb, $chkWu, $chkBl, $btnRefresh, $btnStart, $btnRestart, $btnLogs, $lblFoot) {
+            if ($c.Tag) { $c.Text = (Get-Zh $c.Tag) }
+        }
+        $form.Text = (Get-Zh 'Secure Boot Certificate Updater') + ' v' + $SbVersion
+        foreach ($tp in $tabs.TabPages) { if ($tp.Tag) { $tp.Text = (Get-Zh $tp.Tag) } }
+        foreach ($lv in $lvCerts, $lvEvents) {
+            for ($i = 0; $i -lt $lv.Columns.Count; $i++) { $lv.Columns[$i].Text = (Get-Zh $lv.Tag[$i][0]) }
+        }
+        $btnLang.Text = (Get-SbText '繁體中文' 'English')
+        Update-View $false
+    }
+
+    $btnLang.Add_Click({
+        if ($script:Busy) { return }
+        if ($script:UiLang -eq 'zh-TW') { $script:UiLang = 'en' } else { $script:UiLang = 'zh-TW' }
+        try { Update-UiLanguage } catch { Add-UiLog ('ERROR: ' + $_.Exception.Message) }
+    })
     # --- Background work ---
     $timer = New-Object System.Windows.Forms.Timer
     $timer.Interval = 250

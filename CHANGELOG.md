@@ -2,13 +2,22 @@
 
 All notable changes to this project are listed here, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions use `major.minor` (and `.patch` for small fixes).
 
-## [Unreleased]
+## [2.1] - 2026-11-11
 
 ### Added
-- **Traditional Chinese (zh-TW) window.** When Windows is set to Traditional Chinese (`zh-TW`, `zh-HK` or `zh-MO`), the GUI uses Traditional Chinese for everything it shows: the window, the state rows, the summary and hints, the certificate and event lists, the message boxes and the log file. `SBGUI_LANG=en` forces English and `SBGUI_LANG=zh-TW` forces Traditional Chinese (handy for screenshots). The engine and its log messages are unchanged, so the `SB-ENGINE` block still matches the script.
+- **Dual Language interface (English and Traditional Chinese), in both front-ends.**
+  - **GUI:** a button at the top right switches the window between English and Traditional Chinese while it is open. The window starts in Traditional Chinese when Windows is set to `zh-TW`, `zh-HK` or `zh-MO`, English otherwise; `SBGUI_LANG=zh-TW` or `SBGUI_LANG=en` sets the starting language.
+  - **Script:** `-Lang auto|en|zh-TW` (or `SB_LANG=zh-TW`), with the same automatic default. `RunMe.bat` passes `-Lang` on, so `RunMe.bat -Lang zh-TW` works.
+  - Everything each front-end shows is translated: the window, the state rows, the summary and hints, the certificate and event lists, the message boxes, the prompts and the log file. Certificate names, product names and error codes stay as they are.
+  - The table and `Get-Zh`/`Get-SbText` live in the shared `SB-ENGINE` block, so the script and the GUI still use one identical copy. No engine string was changed; both front-ends translate what the engine returns.
 
 ### Changed
-- The GUI file is now UTF-8 without a BOM; it is read as UTF-8 both at runtime (`iex ([IO.File]::ReadAllText(..., [Text.Encoding]::UTF8))`) and by the GitHub Action. Its batch header (the lines `cmd.exe` runs) and the script and `RunMe.bat` stay ASCII. The Action now checks exactly that instead of requiring the whole GUI to be ASCII.
+- **File encodings.** The GUI is UTF-8 without a BOM (read as UTF-8 at runtime and in the Action); `Update-SecureBootCert.ps1` is UTF-8 **with** a BOM, because Windows PowerShell 5.1 would otherwise misread the Chinese text; `RunMe.bat` stays ASCII. The GitHub Action now checks exactly that: the script must carry a BOM if it contains non-ASCII characters, `RunMe.bat` must stay ASCII, the GUI must not have a BOM and only its batch header (the lines `cmd.exe` runs) must be ASCII.
+- `RunMe.bat`'s own status lines (below the script's output) are still English; the script, its prompts and its log follow `-Lang`.
+- **HTTPS only.** The Microsoft Update Catalog download used to retry the plain-HTTP link when the HTTPS download failed; that retry is gone. `0x5944` is the value Microsoft documents for the full update (KB 5068202), now cited in the code comment.
+
+### Fixed
+- **The language button was invisible.** It shared the title's row and was drawn behind the title label, so the window had no visible toggle even though the button existed and worked. It is now brought in front of the label and anchored to the right edge, so it stays at the top right when the window is resized.
 
 ## [2.0] - 2026-10-23
 
@@ -33,7 +42,7 @@ A rewrite of the script and the GUI. Both now share the same engine (the `SB-ENG
 - Script: the restart flag set after installing KB5073724 was reset by the next step.
 - **Windows Server 2016/2019/2022 was treated as Windows 10** (build below 22000) and offered KB5073724.
 - Script: it said "2023 certificates are already installed" based on the Windows certificate store (`Cert:\LocalMachine\Root`), which has nothing to do with Secure Boot. Those checks are removed.
-- Script: `√` characters showed as garbage in Windows PowerShell 5.1 (UTF-8 file without BOM). The script and `RunMe.bat` are plain ASCII now; the GUI is read as UTF-8 explicitly.
+- Script: `√` characters showed as garbage in Windows PowerShell 5.1 (UTF-8 file without BOM). The script is now UTF-8 with a BOM so 5.1 reads it correctly, `RunMe.bat` stays ASCII, and the GUI is read as UTF-8 explicitly.
 - RunMe.bat: endless UAC prompts when the Server service was disabled (`net session`), and paths containing `'` broke the elevation.
 - Error codes are shown as `0x80070490` instead of negative numbers.
 
@@ -44,7 +53,7 @@ A rewrite of the script and the GUI. Both now share the same engine (the `SB-ENG
 - Log files in `%ProgramData%\Update-SecureBootCert` (script transcript and GUI log).
 - Parameters: `-CheckOnly`, `-Unattended`, `-InstallWindowsUpdates`, `-SkipKB`, `-DbOnly`, `-SuspendBitLocker`, `-Restart`, `-NoPause`, `-LogPath`.
 - Exit codes: 0 up to date, 1 error, 2 update needed or not finished, 3 cancelled, 3010 restart needed.
-- GitHub Action (`.github/workflows/check-scripts.yml`): parses both files, checks that the engine blocks are identical, checks that the script and `RunMe.bat` are ASCII and that the GUI's batch header is ASCII, and runs PSScriptAnalyzer.
+- GitHub Action (`.github/workflows/check-scripts.yml`): parses both files, checks that the engine blocks are identical, checks the encodings (the script needs a BOM when it has non-ASCII text, `RunMe.bat` is ASCII, the GUI has no BOM and an ASCII batch header) and runs PSScriptAnalyzer.
 - `.gitattributes` keeps CRLF line endings for all `.bat`, `.cmd` and `.ps1` files.
 
 ### Removed
@@ -93,6 +102,7 @@ A rewrite of the script and the GUI. Both now share the same engine (the `SB-ENG
 - First version: `Update-SecureBootCert.ps1`, `RunMe.bat` and the READMEs (English and Traditional Chinese).
 
 [2.0]: ../../releases/tag/v2.0
+[2.1]: ../../releases/tag/v2.1
 [1.2.1]: ../../releases/tag/v1.2.1
 [1.2]: ../../releases/tag/v1.2
 [1.1]: ../../releases/tag/v1.1

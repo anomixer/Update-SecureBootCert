@@ -7,7 +7,7 @@
 
 [中文說明 (Traditional Chinese)](./README_TW.md)
 
-![version](https://img.shields.io/badge/version-2.0-orange) ![platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011%20%7C%20Server-blue)
+![version](https://img.shields.io/badge/version-2.1-orange) ![platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011%20%7C%20Server-blue)
 
 ## Table of Contents
 
@@ -60,7 +60,7 @@ Nothing is changed until you click **Start update** and confirm.
 
 ![Confirmation before the update starts](docs/screenshots/gui-confirm.png)
 
-> **Window language:** when Windows is set to Traditional Chinese (`zh-TW`, `zh-HK` or `zh-MO`), the GUI and its log file are in Traditional Chinese. Set `SBGUI_LANG=en` to force English, or `SBGUI_LANG=zh-TW` to force Traditional Chinese. The screenshots show the English window.
+> **Window language:** the button at the top right switches the window between English and Traditional Chinese, and the log file follows it. The window starts in Traditional Chinese when Windows is set to `zh-TW`, `zh-HK` or `zh-MO`, English otherwise; `SBGUI_LANG=en` or `SBGUI_LANG=zh-TW` sets the starting language. The screenshots show the English window.
 
 ---
 
@@ -137,7 +137,7 @@ If you do not run it again, Windows runs the task by itself within about 12 hour
 
 ```powershell
 .\Update-SecureBootCert.ps1 [-CheckOnly] [-Unattended] [-InstallWindowsUpdates] [-SkipKB]
-                            [-DbOnly] [-SuspendBitLocker] [-Restart] [-NoPause] [-LogPath <file>]
+                            [-DbOnly] [-SuspendBitLocker] [-Restart] [-NoPause] [-Lang <auto|en|zh-TW>] [-LogPath <file>]
 ```
 
 | Parameter | What it does |
@@ -150,9 +150,12 @@ If you do not run it again, Windows runs the task by itself within about 12 hour
 | `-SuspendBitLocker` | Suspend BitLocker for the next 2 restarts |
 | `-Restart` | Restart automatically (after 30 seconds) when needed |
 | `-NoPause` | Do not wait for Enter at the end |
+| `-Lang` | Interface language: `auto` (Chinese when Windows is set to zh-TW/HK/MO), `en`, or `zh-TW` |
 | `-LogPath` | Where to write the log |
 
-`RunMe.bat` passes its arguments on, for example `RunMe.bat -CheckOnly`.
+`RunMe.bat` passes its arguments on, for example `RunMe.bat -CheckOnly` or `RunMe.bat -Lang zh-TW`.
+
+The output follows the Windows language unless you pass `-Lang`; `SB_LANG=en` or `SB_LANG=zh-TW` does the same as a parameter. The script and its log file are then in English or Traditional Chinese.
 
 **Exit codes**
 
@@ -307,7 +310,7 @@ Get-WinEvent -FilterHashtable @{ LogName = 'System'; Id = 1036, 1043, 1799, 1800
 
 ## Credits
 
-Original tool by **anomixer**. GUI (1.2) and version 2.0 by **j0p3s**.
+Original tool by **anomixer**. GUI (1.2) and version 2.0 by **j0p3s**; version 2.1 and the dual-language interface by **anomixer**.
 
 Use at your own risk. Changing Secure Boot settings affects how the PC starts.
 
@@ -315,7 +318,13 @@ Use at your own risk. Changing Secure Boot settings affects how the PC starts.
 
 ## Changelog
 
-Current version: **2.0**. The full history is in [CHANGELOG.md](CHANGELOG.md).
+Current version: **2.1**. The full history is in [CHANGELOG.md](CHANGELOG.md).
+
+### 2.1 - 2026-11-11
+- **Dual Language interface (English and Traditional Chinese), in the window and in the script.** The GUI has a button at the top right that switches English and Traditional Chinese while it is open; the script has `-Lang auto|en|zh-TW` (and `SB_LANG`). Both start in Traditional Chinese when Windows is set to zh-TW/HK/MO. Everything they show is translated, including the log file.
+- **HTTPS only.** The Microsoft Update Catalog download no longer falls back to plain HTTP.
+- `0x5944` is the value Microsoft documents for the full update (KB 5068202); the code comment now says so.
+- **Fixed:** the language button was drawn behind the title label, so the window showed no toggle at all. It is now on top of the label and anchored to the right edge, so it stays visible when the window is resized.
 
 ### 2.0 - 2026-10-23
 - **Full update:** installs all the 2023 certificates and the 2023-signed boot manager (`0x5944`), not only Windows UEFI CA 2023. Never overwrites an update Windows has already queued.

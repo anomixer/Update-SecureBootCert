@@ -1,10 +1,11 @@
 @echo off
 setlocal
 REM ============================================================
-REM  Update-SecureBootCert v2.0 - one-click launcher
+REM  Update-SecureBootCert v2.1 - one-click launcher
 REM  Asks for administrator rights, then runs Update-SecureBootCert.ps1.
 REM  Any arguments are passed on to the script, for example:
 REM    RunMe.bat -CheckOnly
+REM    RunMe.bat -Lang zh-TW   (Traditional Chinese interface)
 REM ============================================================
 
 REM fltmc works only as administrator (and, unlike "net session",

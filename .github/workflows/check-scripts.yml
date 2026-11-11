@@ -38,13 +38,16 @@ jobs:
           }
           if ((Get-Engine $files[0]) -cne (Get-Engine $files[1])) { throw 'The SB-ENGINE blocks differ between the script and the GUI.' }
 
-          # 3. The script and the launcher stay ASCII (Windows PowerShell 5.1 misreads UTF-8
-          #    without a BOM). The GUI carries the zh-TW strings, so only its batch header -
-          #    the part cmd.exe reads - must be ASCII, and it must not start with a BOM.
-          foreach ($f in $files[0], 'RunMe.bat') {
-              $b = [IO.File]::ReadAllBytes((Resolve-Path $f).Path)
-              if ($b | Where-Object { $_ -gt 127 } | Select-Object -First 1) { throw "$f contains non-ASCII characters" }
-          }
+          # 3. Encoding rules. Windows PowerShell 5.1 misreads UTF-8 without a BOM, so the
+          #    script may carry the zh-TW table only if it starts with a UTF-8 BOM, and
+          #    RunMe.bat (cmd.exe) stays ASCII. The GUI is read as UTF-8 by the launcher,
+          #    so it must not have a BOM and only its batch header must be ASCII.
+          $ps = [IO.File]::ReadAllBytes((Resolve-Path $files[0]).Path)
+          $psBom = ($ps.Length -ge 3 -and $ps[0] -eq 0xEF -and $ps[1] -eq 0xBB -and $ps[2] -eq 0xBF)
+          $psNonAscii = [bool]($ps | Where-Object { $_ -gt 127 } | Select-Object -First 1)
+          if ($psNonAscii -and -not $psBom) { throw 'Update-SecureBootCert.ps1 contains non-ASCII characters but has no UTF-8 BOM; Windows PowerShell 5.1 would misread it.' }
+          $bat = [IO.File]::ReadAllBytes((Resolve-Path 'RunMe.bat').Path)
+          if ($bat | Where-Object { $_ -gt 127 } | Select-Object -First 1) { throw 'RunMe.bat contains non-ASCII characters' }
           $gui = [IO.File]::ReadAllBytes((Resolve-Path $files[1]).Path)
           if ($gui.Length -ge 3 -and $gui[0] -eq 0xEF -and $gui[1] -eq 0xBB -and $gui[2] -eq 0xBF) { throw 'The GUI must not start with a BOM.' }
           $guiText = [Text.Encoding]::UTF8.GetString($gui)
