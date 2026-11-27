@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Update-SecureBootCert — Windows Secure Boot Certificate Updater</title>
+  <meta name="description" content="Fix expired Microsoft Secure Boot certificates on Windows 10/11 and Server 2016-2025. One-click GUI and command-line tool for seamless certificate updates without internet.">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #0078D4;
+      --primary-hover: #1084D7;
+      --primary-light: rgba(0, 120, 212, 0.15);
+      --success: #16A34A;
+      --success-light: rgba(22, 163, 74, 0.15);
+      --warning: #DC2626;
+      --warning-light: rgba(220, 38, 38, 0.15);
+      --bg: #0D1117;
+      --surface: #161B22;
+      --surface2: #1C2128;
+      --surface3: #21262D;
+      --border: #30363D;
+      --text: #C9D1D9;
+      --text-bright: #F0F6FC;
+      --text-dim: #8B949E;
+      --text-muted: #484F58;
+      --radius: 12px;
+      --font-mono: 'JetBrains Mono', Consolas, Monaco, 'Courier New', monospace;
+    }
+
+        body.light-mode {
+      --bg: #FFFFFF;
+      --surface: #F6F8FA;
+      --surface2: #EAEEF2;
+      --surface3: #D0D7DE;
+      --border: #D0D7DE;
+      --text: #57606A;
+      --text-bright: #0D1117;
+      --text-dim: #57606A;
+      --text-muted: #768390;
+      --primary: #0969DA;
+      --primary-light: rgba(9, 105, 218, 0.15);
+    }
+
+    body.light-mode header {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid #D0D7DE;
+    }
+
+    body.light-mode .nav-links a {
+      color: #57606A;
+      font-size: 0.85rem;
+      white-space: nowrap;
+    }
+
+    body.light-mode .nav-links a:hover {
+      color: var(--primary);
+      background: rgba(9, 105, 218, 0.08);
+    }
+
+    .lang-en .zh { display: none !important; }
+    .lang-zh .en { display: none !important; }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(13, 17, 23, 0.9);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 70px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      font-weight: 800;
+      font-size: 1.3rem;
+      color: var(--text-bright);
+    }
+
+    .brand-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.1);
+      display: grid;
+      place-items: center;
+      font-size: 18px;
+      box-shadow: 0 0 15px rgba(0, 120, 212, 0.2);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2px;
+      list-style: none;
+      align-items: center;
+    }
+
+    .nav-links a {
+      color: var(--text-dim);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.8rem;
+      padding: 5px 8px;
+      border-radius: 6px;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .nav-links a:hover { color: var(--primary); background: rgba(0, 120, 212, 0.12); }
+
+    .nav-actions { display: flex; gap: 10px; align-items: center; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s;
+      cursor: pointer;
+      border: 1px solid transparent;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), #1084D7);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(0, 120, 212, 0.3);
+    }
+
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 120, 212, 0.4); }
+
+    .btn-secondary { background: var(--surface2); color: var(--text-bright); border-color: var(--border); }
+
+    .btn-secondary:hover { border-color: var(--primary); color: var(--primary); }
+
+    .btn-lang {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .btn-lang:hover { border-color: var(--primary); color: var(--primary); }
+
+    .hero {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 100px 24px 80px;
+      text-align: center;
+      background: radial-gradient(ellipse 1200px 600px at 50% -10%, rgba(0, 120, 212, 0.1), transparent 70%);
+    }
+
+    .hero h1 {
+      font-size: clamp(2.2rem, 5vw, 3.8rem);
+      font-weight: 800;
+      color: var(--text-bright);
+      margin-bottom: 20px;
+      letter-spacing: -1px;
+      line-height: 1.15;
+    }
+
+    .hero h1 span { background: linear-gradient(135deg, var(--primary), #1084D7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+    .hero .lead {
+      font-size: 1.15rem;
+      color: var(--text-dim);
+      max-width: 720px;
+      margin: 0 auto 40px;
+      line-height: 1.7;
+    }
+
+    .hero-cta { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-bottom: 50px; }
+
+    .hero-status { display: inline-flex; align-items: center; gap: 8px; background: var(--surface); border: 1px solid var(--border); padding: 8px 16px; border-radius: 20px; font-size: 0.85rem; color: var(--text-dim); margin-top: 20px; }
+
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); box-shadow: 0 0 8px var(--success); }
+
+    section { padding: 80px 0; border-bottom: 1px solid var(--border); }
+    section.alt { background: var(--surface); }
+
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+    .sec-head { text-align: center; max-width: 720px; margin: 0 auto 50px; }
+    .sec-eyebrow { font-size: 0.8rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px; display: block; }
+    .sec-head h2 { font-size: clamp(1.8rem, 3vw, 2.5rem); font-weight: 700; color: var(--text-bright); margin-bottom: 12px; }
+    .sec-head p { font-size: 1.05rem; color: var(--text-dim); }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; }
+
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 32px; transition: all 0.25s; }
+    .card:hover { border-color: var(--primary); transform: translateY(-4px); box-shadow: 0 12px 30px rgba(0, 120, 212, 0.15); }
+    .card-icon { width: 48px; height: 48px; border-radius: 12px; background: var(--primary-light); display: grid; place-items: center; font-size: 24px; margin-bottom: 16px; color: var(--primary); }
+    .card h3 { font-size: 1.2rem; font-weight: 700; color: var(--text-bright); margin-bottom: 10px; }
+    .card p { font-size: 0.95rem; color: var(--text-dim); line-height: 1.65; }
+
+    .comparison { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 40px; }
+    @media (max-width: 768px) { .comparison { grid-template-columns: 1fr; } }
+
+    .ss-box { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; transition: all 0.2s; cursor: pointer; }
+    .ss-box:hover { border-color: var(--primary); transform: translateY(-2px); }
+
+    .ss-header { padding: 12px 16px; background: var(--surface3); border-bottom: 1px solid var(--border); font-weight: 600; font-size: 0.9rem; display: flex; align-items: center; justify-content: space-between; }
+    .ss-header.warning { color: var(--warning); background: rgba(220, 38, 38, 0.05); border-color: rgba(220, 38, 38, 0.2); }
+    .ss-header.success { color: var(--success); background: rgba(22, 163, 74, 0.05); border-color: rgba(22, 163, 74, 0.2); }
+    .ss-img { width: 100%; height: auto; display: block; background: var(--bg); }
+
+    .code-block { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 16px; font-family: var(--font-mono); font-size: 0.85rem; color: var(--text); overflow-x: auto; margin: 20px 0; }
+    .code-block code { color: #79C0FF; }
+
+    .table-box { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); overflow-x: auto; margin: 24px 0; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    th { background: var(--surface3); color: var(--text-bright); font-weight: 700; padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border); }
+    td { padding: 12px 16px; border-bottom: 1px solid var(--border); color: var(--text-dim); }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(0, 120, 212, 0.05); }
+
+    .badge { display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; }
+    .badge-success { background: var(--success-light); color: var(--success); }
+    .badge-warning { background: var(--warning-light); color: var(--warning); }
+
+    .faq-list { max-width: 860px; margin: 0 auto; }
+    .faq-item { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 12px; overflow: hidden; }
+    .faq-question { padding: 20px; font-weight: 700; color: var(--text-bright); cursor: pointer; display: flex; align-items: center; justify-content: space-between; user-select: none; transition: background 0.2s; }
+    .faq-question:hover { background: rgba(0, 120, 212, 0.05); }
+    .faq-icon { font-size: 1.2rem; transition: transform 0.3s; }
+    .faq-item.open .faq-icon { transform: rotate(180deg); }
+    .faq-answer { padding: 0 20px 20px; color: var(--text-dim); display: none; border-top: 1px dashed var(--border); padding-top: 16px; font-size: 0.95rem; line-height: 1.65; }
+    .faq-item.open .faq-answer { display: block; }
+
+    footer { background: var(--surface); border-top: 1px solid var(--border); padding: 50px 0 30px; text-align: center; color: var(--text-dim); font-size: 0.9rem; }
+    .footer-links { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; margin-bottom: 20px; }
+    .footer-links a { color: var(--primary); text-decoration: none; }
+    .footer-links a:hover { text-decoration: underline; }
+    .copyright { color: var(--text-muted); font-size: 0.85rem; }
+
+    @media (max-width: 768px) { .nav-links { display: none; } .hero { padding: 60px 24px 50px; } .hero h1 { font-size: 2rem; } section { padding: 50px 0; } }
+  </style>
+</head>
+
+<body class="lang-zh">
+  <header>
+    <nav class="nav">
+      <a href="#" class="brand"><div class="brand-icon">🛡️</div><span>Update-SecureBootCert</span></a>
+      <ul class="nav-links">
+        <li><a href="#features"><span class="zh">核心特色</span><span class="en">Features</span></a></li>
+        <li><a href="#what-is"><span class="zh">2026 認證過期</span><span class="en">2026 Expiry</span></a></li>
+        <li><a href="#setup"><span class="zh">快速開始</span><span class="en">Start</span></a></li>
+        <li><a href="#status"><span class="zh">狀態查詢</span><span class="en">Status</span></a></li>
+        <li><a href="#faq"><span class="zh">常見問題</span><span class="en">FAQ</span></a></li>
+      </ul>
+      <div class="nav-actions">
+        <button class="btn btn-lang" id="themeToggle" onclick="toggleTheme()" title="Toggle theme">🌙</button>
+        <button class="btn btn-lang" onclick="toggleLanguage()"><span class="zh">🌐 English</span><span class="en">🌐 繁體中文</span></button>
+        <a href="https://github.com/anomixer/Update-SecureBootCert/releases" target="_blank" class="btn btn-primary"><span class="zh">⬇️ 下載工具</span><span class="en">⬇️ Download</span></a>
+        <a href="https://github.com/anomixer/Update-SecureBootCert" target="_blank" class="btn btn-secondary">⭐ GitHub</a>
+      </div>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <h1><span class="zh">一鍵更新 Windows Secure Boot <span>認證</span><br>徹底解決 2026 認證過期問題</span><span class="en">One-Click Secure Boot Certificate Fix for 2026</span></h1>
+    <p class="lead"><span class="zh">Microsoft 2011 Secure Boot 認證已於 2026 年過期。本工具自動檢測系統狀態，安裝 2023 新認證與簽署版啟動管理器，確保 Windows 持續獲得啟動層級安全更新。</span><span class="en">Microsoft 2011 Secure Boot certificates expired in 2026. This tool automatically detects your PC state, installs 2023 certificates and the 2023-signed boot manager, ensuring continuous boot-level security updates.</span></p>
+    <div class="hero-cta">
+      <a href="#setup" class="btn btn-primary"><span class="zh">🚀 快速開始</span><span class="en">🚀 Quick Start</span></a>
+      <a href="https://github.com/anomixer/Update-SecureBootCert#readme" target="_blank" class="btn btn-secondary"><span class="zh">📖 檢視完整文件</span><span class="en">📖 View Full Docs</span></a>
+    </div>
+    <div class="hero-status"><div class="status-dot"></div><span class="zh">支援 Windows 10 / 11 / Server 2016-2025</span><span class="en">Supports Windows 10 / 11 / Server 2016-2025</span></div>
+  </section>
+
+  <section id="features" class="alt">
+    <div class="container">
+      <div class="sec-head"><span class="sec-eyebrow"><span class="zh">核心功能</span><span class="en">Features</span></span><h2><span class="zh">為什麼需要這個工具</span><span class="en">Why You Need This Tool</span></h2><p><span class="zh">Secure Boot 認證過期不會讓電腦無法啟動，但會停止接收啟動層級的安全更新。</span><span class="en">Expired Secure Boot certificates won't stop your PC, but will halt boot-level security fixes.</span></p></div>
+      <div class="grid">
+        <div class="card"><div class="card-icon">✅</div><h3><span class="zh">自動檢測狀態</span><span class="en">Auto-Detect Status</span></h3><p><span class="zh">讀取韌體中的認證，檢查 Windows 更新進度，找出缺失的 2023 認證與啟動管理器。</span><span class="en">Reads firmware certificates, checks Windows update progress, identifies missing 2023 certs and boot manager.</span></p></div>
+        <div class="card"><div class="card-icon">🔐</div><h3><span class="zh">完整更新方案</span><span class="en">Full Update Suite</span></h3><p><span class="zh">安裝 2023 年 KEK、DB 認證和簽署版啟動管理器，確保十年無憂。</span><span class="en">Installs 2023 KEK, DB certificates and signed boot manager. Worry-free for 10 years.</span></p></div>
+        <div class="card"><div class="card-icon">💻</div><h3><span class="zh">圖形與命令行</span><span class="en">GUI & CLI</span></h3><p><span class="zh">提供友善的圖形介面（支援繁體中文與英文）與自動化命令行選項。</span><span class="en">Friendly GUI (Chinese & English) and automation-friendly CLI parameters.</span></p></div>
+        <div class="card"><div class="card-icon">🔒</div><h3><span class="zh">安全可靠</span><span class="en">Secure & Reliable</span></h3><p><span class="zh">正式官方方案，所有更新均來自 Microsoft 官方 Secure Boot 更新任務。</span><span class="en">Official Microsoft method. All updates come from the native Secure-Boot-Update task.</span></p></div>
+        <div class="card"><div class="card-icon">🛡️</div><h3><span class="zh">BitLocker 友善</span><span class="en">BitLocker Friendly</span></h3><p><span class="zh">自動偵測 BitLocker，支援暫時禁用 2 次重啟，完成後自動啟用。</span><span class="en">Auto-detects BitLocker, can suspend for 2 restarts, auto-resumes when done.</span></p></div>
+        <div class="card"><div class="card-icon">📋</div><h3><span class="zh">詳細日誌</span><span class="en">Detailed Logs</span></h3><p><span class="zh">所有操作記錄於 `%ProgramData%\Update-SecureBootCert`，便於診斷與追蹤。</span><span class="en">All operations logged to `%ProgramData%\Update-SecureBootCert` for diagnostics.</span></p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="what-is">
+    <div class="container">
+      <div class="sec-head"><span class="sec-eyebrow"><span class="zh">背景知識</span><span class="en">Background</span></span><h2><span class="zh">2026 認證過期代表什麼</span><span class="en">What 2026 Expiry Means</span></h2><p><span class="zh">理解 Secure Boot 更新的重要性</span><span class="en">Understanding the importance of Secure Boot updates</span></p></div>
+
+      <div class="comparison">
+        <div class="ss-box"><div class="ss-header warning"><span class="zh">❌ 認證已過期</span><span class="en">❌ Certificates Expired</span></div><div style="padding: 20px; background: var(--surface2); color: var(--text-dim);"><ul style="list-style: inside; line-height: 1.8;"><li><span class="zh">❌ 無法接收啟動層安全更新</span><span class="en">❌ No boot-level security updates</span></li><li><span class="zh">❌ Boot manager 和 DBX 無法更新</span><span class="en">❌ Boot manager & DBX won't update</span></li><li><span class="zh">❌ 新型三方啟動程式無法驗證</span><span class="en">❌ New third-party boot loaders fail</span></li><li><span class="zh">✅ 電腦仍可正常啟動</span><span class="en">✅ PC still boots normally</span></li><li><span class="zh">✅ 一般 Windows 更新不受影響</span><span class="en">✅ Regular Windows updates work</span></li></ul></div></div>
+
+        <div class="ss-box"><div class="ss-header success"><span class="zh">✅ 安裝 2023 認證</span><span class="en">✅ Install 2023 Certs</span></div><div style="padding: 20px; background: var(--surface2); color: var(--text-dim);"><ul style="list-style: inside; line-height: 1.8;"><li><span class="zh">✅ 持續獲得啟動安全更新</span><span class="en">✅ Continuous boot security updates</span></li><li><span class="zh">✅ Boot manager 和 DBX 保持最新</span><span class="en">✅ Boot manager & DBX stay current</span></li><li><span class="zh">✅ 新型啟動程式可正常驗證</span><span class="en">✅ New boot loaders verify correctly</span></li><li><span class="zh">✅ 十年無需再次更新</span><span class="en">✅ 10 years without re-running</span></li><li><span class="zh">✅ 完全符合 Microsoft 官方指引</span><span class="en">✅ Follows Microsoft's official method</span></li></ul></div></div>
+      </div>
+
+      <div class="table-box"><table><thead><tr><th><span class="zh">舊認證 (2011)</span><span class="en">Old Cert (2011)</span></th><th><span class="zh">過期日期</span><span class="en">Expires</span></th><th><span class="zh">新認證 (2023)</span><span class="en">New Cert (2023)</span></th><th><span class="zh">儲存位置</span><span class="en">Location</span></th></tr></thead><tbody><tr><td>Microsoft Corporation KEK CA 2011</td><td><span class="badge badge-warning">2026-06-24</span></td><td>Microsoft Corporation KEK 2K CA 2023</td><td>KEK</td></tr><tr><td>Microsoft Corporation UEFI CA 2011</td><td><span class="badge badge-warning">2026-06-27</span></td><td>Microsoft UEFI CA 2023</td><td>DB</td></tr><tr><td>Microsoft Corporation UEFI CA 2011</td><td><span class="badge badge-warning">2026-06-27</span></td><td>Microsoft Option ROM UEFI CA 2023</td><td>DB</td></tr><tr><td>Microsoft Windows Production PCA 2011</td><td><span class="badge badge-warning">2026-10-19</span></td><td>Windows UEFI CA 2023</td><td>DB</td></tr></tbody></table></div>
+
+      <h3 style="color: var(--text-bright); margin-top: 50px; margin-bottom: 24px; font-size: 1.15rem; text-align: center;"><span class="zh">實際工具運作畫面</span><span class="en">Tool in Action</span></h3>
+      
+      <div class="comparison">
+        <div class="ss-box"><div class="ss-header warning"><span class="zh">❌ 更新前：檢查狀態</span><span class="en">❌ Before: Check Status</span></div><img src="screenshots/gui-certificates.png" alt="GUI showing certificate status" class="ss-img"></div>
+        <div class="ss-box"><div class="ss-header success"><span class="zh">✅ 更新後：確認完成</span><span class="en">✅ After: Confirmation</span></div><img src="screenshots/gui-confirm.png" alt="GUI confirmation dialog" class="ss-img"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="setup" class="alt">
+    <div class="container">
+      <div class="sec-head"><span class="sec-eyebrow"><span class="zh">快速開始</span><span class="en">Quick Start</span></span><h2><span class="zh">三步完成更新</span><span class="en">3 Steps to Update</span></h2><p><span class="zh">適用於 Windows 10/11 與 Server 2016-2025</span><span class="en">Works on Windows 10/11 & Server 2016-2025</span></p></div>
+
+      <div style="max-width: 800px; margin: 0 auto;">
+        <div style="margin-bottom: 30px; padding: 24px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);"><h3 style="font-size: 1.1rem; margin-bottom: 16px; color: var(--text-bright);"><span class="zh">第 1 步：下載並解壓</span><span class="en">Step 1: Download & Extract</span></h3><p style="color: var(--text-dim); margin-bottom: 12px;"><span class="zh">從 <a href="https://github.com/anomixer/Update-SecureBootCert/releases" target="_blank" style="color: var(--primary);">GitHub Release</a> 下載最新版本。如果 Windows 警告檔案被阻擋，請右鍵 → 內容 → 勾選「解除封鎖」。</span><span class="en">Download the latest from <a href="https://github.com/anomixer/Update-SecureBootCert/releases" target="_blank" style="color: var(--primary);">GitHub Release</a>. If Windows blocks the files, right-click → Properties → check "Unblock".</span></p></div>
+
+        <div style="margin-bottom: 30px; padding: 24px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);"><h3 style="font-size: 1.1rem; margin-bottom: 16px; color: var(--text-bright);"><span class="zh">第 2 步：執行工具</span><span class="en">Step 2: Run Tool</span></h3><p style="color: var(--text-dim); margin-bottom: 12px;"><span class="zh">選擇以下其中一種方式（都需要系統管理員權限）：</span><span class="en">Choose one of the following (both require admin rights):</span></p><ul style="color: var(--text-dim); margin-left: 20px; line-height: 1.8;"><li><strong><span class="zh">圖形介面</span><span class="en">GUI</span>：</strong><span class="zh">雙擊</span><span class="en">Double-click</span> <code style="background: var(--surface2); padding: 2px 6px; border-radius: 4px;">Update-SecureBootCert-GUI.cmd</code></li><li><strong><span class="zh">命令行</span><span class="en">CLI</span>：</strong><span class="zh">雙擊</span><span class="en">Double-click</span> <code style="background: var(--surface2); padding: 2px 6px; border-radius: 4px;">RunMe.bat</code></li></ul></div>
+
+        <div style="padding: 24px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);"><h3 style="font-size: 1.1rem; margin-bottom: 16px; color: var(--text-bright);"><span class="zh">第 3 步：確認並重啟</span><span class="en">Step 3: Confirm & Restart</span></h3><p style="color: var(--text-dim); margin-bottom: 12px;"><span class="zh">工具會顯示目前狀態。如需更新，點擊「開始更新」並確認。系統重啟後，再執行一次工具以確認更新完成。</span><span class="en">The tool shows current status. If update needed, click "Start Update" and confirm. After restart, run again to verify completion.</span></p></div>
+      </div>
+
+      <div style="margin-top: 40px; padding: 20px; background: var(--warning-light); border: 1px solid var(--warning); border-radius: 8px; text-align: left;"><strong style="color: var(--warning);">💡 <span class="zh">BitLocker 提示</span><span class="en">BitLocker Tip</span>：</strong><span style="color: var(--text-dim); display: block; margin-top: 8px;"><span class="zh">如果系統啟用了 BitLocker，工具會詢問是否暫停 2 次重啟。建議選擇暫停，工具完成後會自動恢復。也可提前備份 48 位復原金鑰（<a href="https://aka.ms/myrecoverykey" style="color: var(--primary);">aka.ms/myrecoverykey</a>）。</span><span class="en">If BitLocker is on, the tool will ask to suspend for 2 restarts. We recommend this — it auto-resumes when done. Or backup your 48-digit recovery key first (<a href="https://aka.ms/myrecoverykey" style="color: var(--primary);">aka.ms/myrecoverykey</a>).</span></span></div>
+    </div>
+  </section>
+
+  <section id="status">
+    <div class="container">
+      <div class="sec-head"><span class="sec-eyebrow"><span class="zh">診斷工具</span><span class="en">Diagnostics</span></span><h2><span class="zh">查詢系統狀態</span><span class="en">Check System Status</span></h2><p><span class="zh">如需手動檢查或用於企業部署</span><span class="en">For manual checks or enterprise deployment</span></p></div>
+
+      <div style="max-width: 860px; margin: 0 auto;">
+        <h3 style="color: var(--text-bright); margin-bottom: 16px; font-size: 1.1rem;"><span class="zh">圖形介面查詢</span><span class="en">GUI Status Check</span></h3>
+        <p style="color: var(--text-dim); margin-bottom: 24px;"><span class="zh">執行工具後，主視窗會顯示 AvailableUpdates 狀態、Windows 更新進度、固件中的認證及最近 Secure Boot 事件。</span><span class="en">Run the tool and the main window displays AvailableUpdates status, Windows update progress, firmware certificates, and recent Secure Boot events.</span></p>
+
+        <h3 style="color: var(--text-bright); margin-bottom: 16px; font-size: 1.1rem;">PowerShell <span class="zh">查詢</span><span class="en">Query</span> (<span class="zh">進階</span><span class="en">Advanced</span>)</h3>
+        <div class="code-block"><code>Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control\SecureBoot\Servicing' |<br>  Select-Object UEFICA2023Status, UEFICA2023Error, WindowsUEFICA2023Capable</code></div>
+
+        <h3 style="color: var(--text-bright); margin-top: 32px; margin-bottom: 16px; font-size: 1.1rem;"><span class="zh">命令行參數</span><span class="en">CLI Parameters</span> (<span class="zh">自動化部署</span><span class="en">Automation</span>)</h3>
+        <p style="color: var(--text-dim); margin-bottom: 16px;"><span class="zh">工具支援多個命令行參數，便於企業部署或無人值守執行：</span><span class="en">The tool supports CLI parameters for enterprise deployment or unattended runs:</span></p>
+        <div class="table-box"><table><thead><tr><th><span class="zh">參數</span><span class="en">Parameter</span></th><th><span class="zh">用途</span><span class="en">Purpose</span></th></tr></thead><tbody><tr><td><code>-CheckOnly</code></td><td><span class="zh">僅檢查狀態，不進行任何更新</span><span class="en">Check status only, no updates</span></td></tr><tr><td><code>-Unattended</code></td><td><span class="zh">無人值守模式，使用預設選項</span><span class="en">Unattended mode with defaults</span></td></tr><tr><td><code>-SuspendBitLocker</code></td><td><span class="zh">自動暫停 BitLocker 2 次重啟</span><span class="en">Auto-suspend BitLocker for 2 restarts</span></td></tr><tr><td><code>-Restart</code></td><td><span class="zh">必要時自動重啟（延遲 30 秒）</span><span class="en">Auto-restart when needed (30s delay)</span></td></tr><tr><td><code>-InstallWindowsUpdates</code></td><td><span class="zh">同時安裝待更新軟體</span><span class="en">Also install pending Windows updates</span></td></tr><tr><td><code>-Lang en | -Lang zh-TW</code></td><td><span class="zh">指定介面語言</span><span class="en">Set interface language</span></td></tr></tbody></table></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="faq" class="alt">
+    <div class="container">
+      <div class="sec-head"><span class="sec-eyebrow"><span class="zh">常見問題</span><span class="en">FAQ</span></span><h2><span class="zh">常見問題與排查</span><span class="en">Common Questions & Troubleshooting</span></h2></div>
+
+      <div class="faq-list">
+        <div class="faq-item" onclick="this.classList.toggle('open')">
+          <div class="faq-question">
+            <span><span class="zh">工具支援哪些 Windows 版本？</span><span class="en">What Windows versions are supported?</span></span>
+            <span class="faq-icon">⌄</span>
+          </div>
+          <div class="faq-answer"><span class="zh">支援 Windows 10 (21H2 / 22H2)、Windows 11 (所有版本) 以及 Windows Server 2016 / 2019 / 2022 / 2025。需要搭載 UEFI 韌體與 Secure Boot。Legacy BIOS (CSM) 不需要更新。</span><span class="en">Supported: Windows 10 (21H2/22H2), Windows 11 (all), and Server 2016/2019/2022/2025. Requires UEFI firmware & Secure Boot. Legacy BIOS (CSM) doesn't need updates.</span></div>
+        </div>
+
+        <div class="faq-item" onclick="this.classList.toggle('open')">
+          <div class="faq-question">
+            <span><span class="zh">沒有更新是不是代表系統已經是最新？</span><span class="en">If no updates shown, is my system already updated?</span></span>
+            <span class="faq-icon">⌄</span>
+          </div>
+          <div class="faq-answer"><span class="zh">是的。工具會顯示目前認證狀態。如果顯示「已更新」或「無需更新」，表示系統已安裝 2023 年認證。如果顯示「需要更新」，請按照工具的指示進行。</span><span class="en">Yes. The tool displays current cert status. "Updated" or "No Update Needed" means you have 2023 certs. "Update Required" means run the tool's steps.</span></div>
+        </div>
+
+        <div class="faq-item" onclick="this.classList.toggle('open')">
+          <div class="faq-question">
+            <span><span class="zh">工具需要網際網路連線嗎？</span><span class="en">Does the tool need internet?</span></span>
+            <span class="faq-icon">⌄</span>
+          </div>
+          <div class="faq-answer"><span class="zh">Secure Boot 更新本身不需要網際網路。但如果選擇安裝 KB5073724（Windows 10 專用）或其他 Windows 更新，才需要連網。核心的 Secure Boot 憑證更新完全在本地進行。</span><span class="en">Secure Boot updates don't need internet. But KB5073724 (Windows 10) and other Windows updates do. Core Secure Boot cert updates work offline.</span></div>
+        </div>
+
+        <div class="faq-item" onclick="this.classList.toggle('open')">
+          <div class="faq-question">
+            <span><span class="zh">如果電腦無法啟動怎麼辦？</span><span class="en">What if PC won't boot after update?</span></span>
+            <span class="faq-icon">⌄</span>
+          </div>
+          <div class="faq-answer"><span class="zh">認證過期本身不會導致無法啟動（UEFI 不檢查到期日）。如果更新後無法啟動：<br>1. 如啟用 BitLocker，可能需要輸入復原金鑰<br>2. 在 BIOS/UEFI 中暫時關閉 Secure Boot，啟動後再執行工具<br>3. 檢查事件檢視器中的 TPM-WMI 事件了解詳細狀態</span><span class="en">Expired certs alone don't prevent boot (UEFI ignores expiry). If boot fails after update:<br>1. BitLocker may need recovery key<br>2. Disable Secure Boot in BIOS/UEFI temporarily, boot, run tool again<br>3. Check Event Viewer TPM-WMI events for details</span></div>
+        </div>
+
+        <div class="faq-item" onclick="this.classList.toggle('open')">
+          <div class="faq-question">
+            <span><span class="zh">Windows 10 一定要安裝 KB5073724 嗎？</span><span class="en">Must Windows 10 install KB5073724?</span></span>
+            <span class="faq-icon">⌄</span>
+          </div>
+          <div class="faq-answer"><span class="zh">KB5073724 是 ESU 更新，Windows 10 在 2026 年 1 月後會開始下架。如果系統已更新到 build .6809 或更新版本，工具會自動跳過此步驟。核心的 Secure Boot 更新不依賴 KB5073724。</span><span class="en">KB5073724 is an ESU update removed after Jan 2026. If you're at build .6809+, the tool skips it. Core Secure Boot updates don't depend on it.</span></div>
+        </div>
+
+        <div class="faq-item" onclick="this.classList.toggle('open')">
+          <div class="faq-question">
+            <span><span class="zh">圖形介面支援哪些語言？</span><span class="en">What languages does the GUI support?</span></span>
+            <span class="faq-icon">⌄</span>
+          </div>
+          <div class="faq-answer"><span class="zh">目前支援繁體中文與英文。工具會根據 Windows 系統語言自動選擇（繁體中文系統預設中文）。點擊視窗右上角的語言按鈕可即時切換。日誌檔案也會隨語言變更。</span><span class="en">Currently supports Traditional Chinese and English. The tool auto-detects your Windows language. Click the language button in the top right to toggle. Logs follow your choice.</span></div>
+        </div>
+
+        <div class="faq-item" onclick="this.classList.toggle('open')">
+          <div class="faq-question">
+            <span><span class="zh">企業 IT 如何批量部署？</span><span class="en">How do enterprises deploy at scale?</span></span>
+            <span class="faq-icon">⌄</span>
+          </div>
+          <div class="faq-answer"><span class="zh">建議使用 Microsoft 官方方案：• 透過 Group Policy 設定 AvailableUpdates 值 • 透過 Intune 或 Configuration Manager 推送 或使用本工具的命令行模式：powershell -NoProfile -ExecutionPolicy Bypass -File .\Update-SecureBootCert.ps1 -Unattended -SuspendBitLocker -Restart</span><span class="en">Use Microsoft's official methods: • Group Policy to set AvailableUpdates • Intune or Configuration Manager Or use the tool's CLI: powershell -NoProfile -ExecutionPolicy Bypass -File .\Update-SecureBootCert.ps1 -Unattended -SuspendBitLocker -Restart</span></div>
+        </div>
+
+        <div class="faq-item" onclick="this.classList.toggle('open')">
+          <div class="faq-question">
+            <span><span class="zh">虛擬機器上能用嗎？</span><span class="en">Does it work on VMs?</span></span>
+            <span class="faq-icon">⌄</span>
+          </div>
+          <div class="faq-answer"><span class="zh">可以。虛擬機器需要搭載 UEFI 韌體、Secure Boot 開啟，且虛擬化平台（Hyper-V、KVM、ESXi 等）需要允許 KEK/DB 更新。建議檢查虛擬化平台文件了解是否支援。</span><span class="en">Yes. VMs need UEFI firmware, Secure Boot enabled, and the hypervisor (Hyper-V, KVM, ESXi) must allow KEK/DB updates. Check your hypervisor's docs.</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container">
+      <div class="footer-links">
+        <a href="https://github.com/anomixer/Update-SecureBootCert"><span class="zh">GitHub 儲存庫</span><span class="en">GitHub Repository</span></a>
+        <a href="https://github.com/anomixer/Update-SecureBootCert/issues"><span class="zh">回報問題</span><span class="en">Report Issues</span></a>
+        <a href="https://github.com/anomixer/Update-SecureBootCert/releases"><span class="zh">版本歷史</span><span class="en">Release History</span></a>
+        <a href="https://support.microsoft.com/en-us/topic/windows-secure-boot-certificate-expiration-and-ca-updates-7ff40d33-95dc-4c3c-8725-a9b95457578e"><span class="zh">Microsoft 文件</span><span class="en">Microsoft Docs</span></a>
+      </div>
+      <p class="copyright"><span class="zh">Original by <strong>anomixer</strong> | GUI & v2.0 by <strong>j0p3s</strong> | v2.1 by <strong>anomixer</strong><br>使用於您自己的風險。更改 Secure Boot 設定會影響 PC 啟動方式。</span><span class="en">Original by <strong>anomixer</strong> | GUI & v2.0 by <strong>j0p3s</strong> | v2.1 by <strong>anomixer</strong><br>Use at your own risk. Changing Secure Boot settings affects how your PC boots.</span></p>
+    </div>
+  </footer>
+
+  <script>
+    // Detect system theme on first load
+    function getSystemTheme() {
+      return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+
+    // Apply theme
+    function applyTheme(theme) {
+      if (theme === 'light') {
+        document.body.classList.add('light-mode');
+        document.getElementById('themeToggle').textContent = '☀️';
+      } else {
+        document.body.classList.remove('light-mode');
+        document.getElementById('themeToggle').textContent = '🌙';
+      }
+    }
+
+    // Toggle theme
+    function toggleTheme() {
+      const currentTheme = document.body.classList.contains('light-mode') ? 'light' : 'dark';
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      applyTheme(newTheme);
+      localStorage.setItem('theme', newTheme);
+    }
+
+    // Set initial theme from localStorage or system preference
+    const savedTheme = localStorage.getItem('theme');
+    const initialTheme = savedTheme || getSystemTheme();
+    applyTheme(initialTheme);
+
+    function toggleLanguage() { 
+      const body = document.body; 
+      if (body.classList.contains('lang-zh')) { 
+        body.classList.remove('lang-zh'); 
+        body.classList.add('lang-en'); 
+        localStorage.setItem('lang', 'en'); 
+      } else { 
+        body.classList.remove('lang-en'); 
+        body.classList.add('lang-zh'); 
+        localStorage.setItem('lang', 'zh'); 
+      } 
+    }
+    const savedLang = localStorage.getItem('lang');
+    if (savedLang) { document.body.classList.remove('lang-en', 'lang-zh'); document.body.classList.add(savedLang === 'en' ? 'lang-en' : 'lang-zh'); }
+  </script>
+</body>
+</html>
+
